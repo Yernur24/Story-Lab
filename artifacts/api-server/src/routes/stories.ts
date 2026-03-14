@@ -295,6 +295,59 @@ router.get("/videos/:key", async (req, res) => {
   }
 });
 
+// Streaming endpoint — returns binary video directly, supports Range requests for seeking
+router.get("/videos/:key/stream", async (req, res) => {
+  try {
+    const rows = await db.select().from(videoFilesTable).where(eq(videoFilesTable.key, req.params.key));
+    if (!rows[0]) return res.status(404).json({ error: "Видео табылмады" });
+
+    const dataBase64: string = rows[0].dataBase64;
+
+    // Extract MIME type and raw base64
+    let mimeType = "video/mp4";
+    let rawBase64 = dataBase64;
+    if (dataBase64.startsWith("data:")) {
+      const semi = dataBase64.indexOf(";");
+      const comma = dataBase64.indexOf(",");
+      mimeType = dataBase64.slice(5, semi);
+      rawBase64 = dataBase64.slice(comma + 1);
+    }
+
+    const buffer = Buffer.from(rawBase64, "base64");
+    const totalSize = buffer.length;
+
+    const rangeHeader = req.headers["range"];
+
+    if (rangeHeader) {
+      // Parse "bytes=start-end"
+      const [startStr, endStr] = rangeHeader.replace("bytes=", "").split("-");
+      const start = parseInt(startStr, 10);
+      const end = endStr ? parseInt(endStr, 10) : Math.min(start + 1024 * 1024 - 1, totalSize - 1);
+      const chunkSize = end - start + 1;
+
+      res.writeHead(206, {
+        "Content-Range": `bytes ${start}-${end}/${totalSize}`,
+        "Accept-Ranges": "bytes",
+        "Content-Length": chunkSize,
+        "Content-Type": mimeType,
+        "Cache-Control": "public, max-age=3600",
+      });
+      res.end(buffer.slice(start, end + 1));
+    } else {
+      res.writeHead(200, {
+        "Content-Length": totalSize,
+        "Content-Type": mimeType,
+        "Accept-Ranges": "bytes",
+        "Cache-Control": "public, max-age=3600",
+      });
+      res.end(buffer);
+    }
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.delete("/videos/:key", async (req, res) => {
   try {
     await db.delete(videoFilesTable).where(eq(videoFilesTable.key, req.params.key));

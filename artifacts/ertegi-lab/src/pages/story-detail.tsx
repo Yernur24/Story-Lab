@@ -134,25 +134,13 @@ export default function StoryDetail() {
   }, [id]);
 
   useEffect(() => {
-    // Reset video state when story changes
     setUploadedVideoUrl(null);
     setVideoLoadState('idle');
 
     if (story?.videoFile) {
-      setVideoLoadState('loading');
-      apiClient.getVideoBase64(story.videoFile).then(({ dataBase64 }) => {
-        const base64 = dataBase64.split(',')[1] ?? dataBase64;
-        const mimeType = dataBase64.startsWith('data:') ? dataBase64.split(';')[0].split(':')[1] : 'video/mp4';
-        const byteChars = atob(base64);
-        const byteArrays = new Uint8Array(byteChars.length);
-        for (let i = 0; i < byteChars.length; i++) byteArrays[i] = byteChars.charCodeAt(i);
-        const blob = new Blob([byteArrays], { type: mimeType });
-        setUploadedVideoUrl(URL.createObjectURL(blob));
-        setVideoLoadState('ready');
-      }).catch(() => {
-        setUploadedVideoUrl(null);
-        setVideoLoadState('error');
-      });
+      // Use streaming endpoint directly — no need to download the whole file as base64
+      setUploadedVideoUrl(`/api/videos/${story.videoFile}/stream`);
+      setVideoLoadState('ready');
     }
   }, [story?.videoFile]);
 
@@ -550,6 +538,7 @@ export default function StoryDetail() {
                           controlsList="nodownload"
                           className="w-full h-full"
                           playsInline
+                          onError={() => setVideoLoadState('error')}
                         />
                       </div>
                     )}
