@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Ertegi-lab"
+version = "1.0.0"
+id = "artifacts/ertegi-lab"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+localPort = 20773
+name = "web"
+paths = ["/"]
+
+[services.development]
+run = "pnpm --filter @workspace/ertegi-lab run dev"
+
+[services.env]
+PORT = "20773"
+BASE_PATH = "/"
+
+[services.production]
+build = ["pnpm", "--filter", "@workspace/ertegi-lab", "run", "build"]
+publicDir = "artifacts/ertegi-lab/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"

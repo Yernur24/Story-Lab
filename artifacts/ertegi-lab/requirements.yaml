@@ -1,0 +1,21 @@
+packages:
+  "framer-motion": "Smooth magical animations for a children's playful UI"
+  "uuid": "Generating unique IDs for local storage items"
+  "@types/uuid": "Types for uuid"
+  "react-hook-form": "Form handling for adding/editing stories"
+  "@hookform/resolvers": "Zod validation resolver for forms"
+
+images:
+  - path: "artifacts/ertegi-lab/public/images/hero-bg.png"
+    description: "Magical fairy tale background with colorful floating stars, glowing clouds, and a rainbow gradient in bright pink, purple, and yellow. Kid-friendly, soft 3D illustration style."
+    aspect_ratio: "16:9"
+  - path: "artifacts/ertegi-lab/public/images/magic-book.png"
+    description: "A cute, glowing magical storybook opening up with sparkles and colorful light beams coming out of it. 3D cartoon style."
+    aspect_ratio: "1:1"
+
+notes:
+  - "Pure frontend application with NO backend"
+  - "All data is persisted in browser localStorage"
+  - "Images and Audio files are converted to Base64 strings to store in localStorage"
+  - "Due to localStorage limits (typically 5MB), file uploads should be kept small"
+  - "Microphone access requires a secure context (localhost or HTTPS)"
