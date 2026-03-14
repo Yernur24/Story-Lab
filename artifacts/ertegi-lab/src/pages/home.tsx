@@ -38,7 +38,7 @@ export default function Home() {
                 
                 <h1 className="text-5xl lg:text-7xl font-display font-extrabold text-foreground mb-6 leading-tight">
                   Өз <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">ертегіңді</span> <br/>
-                  жарат!
+                  жаса!
                 </h1>
                 
                 <p className="text-xl text-muted-foreground font-medium mb-10 max-w-2xl mx-auto lg:mx-0">

@@ -7,6 +7,7 @@ import Home from "@/pages/home";
 import Library from "@/pages/library";
 import StoryDetail from "@/pages/story-detail";
 import StoryForm from "@/pages/story-form";
+import QuizPage from "@/pages/quiz";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/story/:id" component={StoryDetail} />
       <Route path="/add" component={StoryForm} />
       <Route path="/edit/:id" component={StoryForm} />
+      <Route path="/quiz/:id" component={QuizPage} />
       <Route component={NotFound} />
     </Switch>
   );

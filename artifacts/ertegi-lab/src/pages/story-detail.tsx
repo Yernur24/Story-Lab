@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRoute } from "wouter";
 import { useStory, useAddVoiceRecording, useDeleteVoiceRecording, useToggleFavorite, useIncrementReadCount } from "@/hooks/use-stories";
-import { ArrowLeft, Edit, Headphones, PlayCircle, Image as ImageIcon, BookOpen, Heart, Share2, Trash2, Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, Edit, Headphones, PlayCircle, Image as ImageIcon, BookOpen, Heart, Share2, Trash2, Check, ChevronLeft, ChevronRight, Gamepad2 } from "lucide-react";
 import { Link } from "wouter";
 import { AudioRecorder } from "@/components/AudioRecorder";
 import { Slideshow } from "@/components/Slideshow";
@@ -185,9 +185,17 @@ export default function StoryDetail() {
               </div>
               <h1 className="text-4xl md:text-5xl font-display font-extrabold text-foreground mb-4 leading-tight">{story.title}</h1>
               <p className="text-lg text-muted-foreground font-medium mb-6">{story.description}</p>
-              <Link href={`/edit/${story.id}`} className="inline-flex items-center gap-2 px-5 py-2 bg-white text-foreground font-bold rounded-xl shadow-sm border-2 border-border hover:bg-muted transition-colors">
-                <Edit className="w-4 h-4" /> Өңдеу
-              </Link>
+              <div className="flex flex-wrap gap-3">
+                <Link href={`/edit/${story.id}`} className="inline-flex items-center gap-2 px-5 py-2 bg-white text-foreground font-bold rounded-xl shadow-sm border-2 border-border hover:bg-muted transition-colors">
+                  <Edit className="w-4 h-4" /> Өңдеу
+                </Link>
+                <Link
+                  href={`/quiz/${story.id}`}
+                  className="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-xl shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all"
+                >
+                  <Gamepad2 className="w-4 h-4" /> 🎮 Ойын
+                </Link>
+              </div>
             </div>
           </div>
         </div>
