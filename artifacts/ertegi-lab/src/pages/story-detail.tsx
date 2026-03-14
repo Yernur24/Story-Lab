@@ -127,13 +127,19 @@ export default function StoryDetail() {
 
   const [currentPage, setCurrentPage] = useState(0);
   const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string | null>(null);
+  const [videoLoadState, setVideoLoadState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
 
   useEffect(() => {
     if (id) incrementReadCount.mutate(id);
   }, [id]);
 
   useEffect(() => {
+    // Reset video state when story changes
+    setUploadedVideoUrl(null);
+    setVideoLoadState('idle');
+
     if (story?.videoFile) {
+      setVideoLoadState('loading');
       apiClient.getVideoBase64(story.videoFile).then(({ dataBase64 }) => {
         const base64 = dataBase64.split(',')[1] ?? dataBase64;
         const mimeType = dataBase64.startsWith('data:') ? dataBase64.split(';')[0].split(':')[1] : 'video/mp4';
@@ -142,8 +148,10 @@ export default function StoryDetail() {
         for (let i = 0; i < byteChars.length; i++) byteArrays[i] = byteChars.charCodeAt(i);
         const blob = new Blob([byteArrays], { type: mimeType });
         setUploadedVideoUrl(URL.createObjectURL(blob));
+        setVideoLoadState('ready');
       }).catch(() => {
         setUploadedVideoUrl(null);
+        setVideoLoadState('error');
       });
     }
   }, [story?.videoFile]);
@@ -215,12 +223,12 @@ export default function StoryDetail() {
   const hasMedia = !!(story.videoUrl || story.videoFile || (story.images && story.images.length > 0));
   const hasDubbing = !!story.audioFile;
   const hasVoiceRecordings = !!(story.voiceRecordings && story.voiceRecordings.length > 0);
-  const hasVideo = !!(story.videoUrl || uploadedVideoUrl);
+  const isYouTube = !!(story.videoUrl && (story.videoUrl.includes('youtube.com') || story.videoUrl.includes('youtu.be')));
 
   const tabs = [
     { id: 'read' as const, label: '📖 Оқу' },
     { id: 'listen' as const, label: '🎧 Тыңдау' },
-    { id: 'watch' as const, label: '🎬 Көру', hidden: !hasMedia },
+    { id: 'watch' as const, label: '🎬 Көру' },
     { id: 'record' as const, label: '🎙 Жазу' },
   ];
 
@@ -322,7 +330,7 @@ export default function StoryDetail() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 -mt-4">
         {/* Tabs */}
         <div className="flex flex-wrap justify-center gap-2 md:gap-3 mb-8">
-          {tabs.filter(t => !t.hidden).map((tab) => (
+          {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => { setActiveTab(tab.id); if (tab.id === 'read') setCurrentPage(0); }}
@@ -514,28 +522,98 @@ export default function StoryDetail() {
             {/* ── WATCH ── */}
             {activeTab === 'watch' && (
               <div className="space-y-10">
-                {uploadedVideoUrl && (
+
+                {/* ─── Uploaded video file from DB ─── */}
+                {story.videoFile && (
                   <div>
-                    <h3 className="font-display text-xl font-bold mb-4">🎬 Жүктелген видео</h3>
-                    <div className="aspect-video w-full rounded-2xl overflow-hidden border-4 border-border shadow-md bg-black">
-                      <video src={uploadedVideoUrl} controls className="w-full h-full" />
-                    </div>
+                    <h3 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
+                      🎬 Жүктелген видео
+                    </h3>
+
+                    {videoLoadState === 'loading' && (
+                      <div className="aspect-video w-full rounded-2xl border-4 border-border bg-muted flex flex-col items-center justify-center gap-4">
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
+                          className="w-14 h-14 rounded-full border-4 border-primary border-t-transparent"
+                        />
+                        <p className="font-bold text-muted-foreground">Видео жүктелуде...</p>
+                        <p className="text-xs text-muted-foreground">Үлкен файлдар үшін бірнеше секунд кетуі мүмкін</p>
+                      </div>
+                    )}
+
+                    {videoLoadState === 'ready' && uploadedVideoUrl && (
+                      <div className="aspect-video w-full rounded-2xl overflow-hidden border-4 border-border shadow-md bg-black">
+                        <video
+                          src={uploadedVideoUrl}
+                          controls
+                          controlsList="nodownload"
+                          className="w-full h-full"
+                          playsInline
+                        />
+                      </div>
+                    )}
+
+                    {videoLoadState === 'error' && (
+                      <div className="aspect-video w-full rounded-2xl border-4 border-destructive/30 bg-destructive/5 flex flex-col items-center justify-center gap-3">
+                        <div className="text-4xl">⚠️</div>
+                        <p className="font-bold text-destructive">Видео жүктелмеді</p>
+                        <p className="text-sm text-muted-foreground text-center max-w-xs">
+                          Файл тым үлкен немесе сервер қатесі болды. Видеоны қайтадан жүктеп көріңіз.
+                        </p>
+                        <Link href={`/edit/${story.id}`} className="inline-flex items-center gap-2 px-4 py-2 bg-secondary text-white font-bold rounded-xl text-sm">
+                          <Edit className="w-4 h-4" /> Өңдеу
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {story.videoUrl && !uploadedVideoUrl && (
+                {/* ─── URL video (YouTube or direct link) ─── */}
+                {story.videoUrl && (
                   <div>
-                    <h3 className="font-display text-xl font-bold mb-4">🎬 Мультфильм / Видео</h3>
+                    <h3 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
+                      {isYouTube ? '▶️ YouTube видео' : '🔗 Видео сілтеме'}
+                    </h3>
                     <div className="aspect-video w-full rounded-2xl overflow-hidden border-4 border-border shadow-md">
-                      {story.videoUrl.includes('youtube.com') || story.videoUrl.includes('youtu.be') ? (
-                        <iframe src={getEmbedUrl(story.videoUrl)} className="w-full h-full" allowFullScreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" />
+                      {isYouTube ? (
+                        <iframe
+                          src={getEmbedUrl(story.videoUrl)}
+                          className="w-full h-full"
+                          allowFullScreen
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          title={story.title}
+                        />
                       ) : (
-                        <video src={story.videoUrl} controls className="w-full h-full bg-black" />
+                        <video
+                          src={story.videoUrl}
+                          controls
+                          controlsList="nodownload"
+                          className="w-full h-full bg-black"
+                          playsInline
+                          onError={(e) => {
+                            const el = e.currentTarget;
+                            el.style.display = 'none';
+                            el.parentElement!.innerHTML = `
+                              <div class="w-full h-full flex flex-col items-center justify-center gap-3 bg-muted">
+                                <div class="text-4xl">🔗</div>
+                                <p class="font-bold text-muted-foreground">Видео браузерде ашылмады</p>
+                                <a href="${story.videoUrl}" target="_blank" rel="noopener noreferrer"
+                                  class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white font-bold rounded-xl text-sm">
+                                  Сыртқы сілтемеде ашу ↗
+                                </a>
+                              </div>`;
+                          }}
+                        />
                       )}
                     </div>
+                    <p className="text-xs text-muted-foreground mt-2 break-all font-medium">
+                      🔗 {story.videoUrl}
+                    </p>
                   </div>
                 )}
 
+                {/* ─── Slideshow ─── */}
                 {story.images && story.images.length > 0 && (
                   <div>
                     <h3 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
@@ -545,19 +623,15 @@ export default function StoryDetail() {
                   </div>
                 )}
 
+                {/* ─── Empty state ─── */}
                 {!hasMedia && (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <div className="text-5xl mb-4">🎬</div>
-                    <p className="font-bold text-lg">Видео немесе слайд-шоу жоқ</p>
-                    <Link href={`/edit/${story.id}`} className="inline-flex items-center gap-2 mt-4 px-5 py-2 bg-secondary text-white font-bold rounded-xl">
-                      <Edit className="w-4 h-4" /> Медиа қосу
+                  <div className="text-center py-16 text-muted-foreground">
+                    <div className="text-6xl mb-4">🎬</div>
+                    <p className="font-bold text-xl mb-1">Видео немесе медиа жоқ</p>
+                    <p className="text-sm mb-6">YouTube сілтемесін немесе MP4 файлын қосыңыз</p>
+                    <Link href={`/edit/${story.id}`} className="inline-flex items-center gap-2 px-6 py-3 bg-secondary text-white font-bold rounded-2xl shadow-md hover:-translate-y-0.5 transition-all">
+                      <Edit className="w-4 h-4" /> Видео қосу
                     </Link>
-                  </div>
-                )}
-
-                {story.videoFile && !uploadedVideoUrl && (
-                  <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 text-amber-800 text-sm font-medium">
-                    ⏳ Видео жүктелуде...
                   </div>
                 )}
               </div>
