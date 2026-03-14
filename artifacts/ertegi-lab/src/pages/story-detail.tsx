@@ -1,6 +1,6 @@
 import { useRoute } from "wouter";
 import { useStory, useAddVoiceRecording } from "@/hooks/use-stories";
-import { ArrowLeft, Edit, Headphones, PlayCircle, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Edit, Headphones, PlayCircle, Image as ImageIcon, BookOpen } from "lucide-react";
 import { Link } from "wouter";
 import { AudioRecorder } from "@/components/AudioRecorder";
 import { Slideshow } from "@/components/Slideshow";
