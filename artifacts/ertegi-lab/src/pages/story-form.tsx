@@ -22,6 +22,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 type VideoMode = 'url' | 'file';
+type AudioMode = 'url' | 'file';
 
 const EMOJIS = [
   '👑','🐉','🏰','🧚‍♀️','🦄','🦁','🦊','🐻','🦉','🦋',
@@ -38,7 +39,9 @@ export default function StoryForm() {
   const { data: existingStory, isLoading: isLoadingStory } = useStory(params?.id || "");
   const saveStory = useSaveStory();
 
+  const [audioMode, setAudioMode] = useState<AudioMode>('file');
   const [audioBase64, setAudioBase64] = useState<string | undefined>();
+  const [audioUrl, setAudioUrl] = useState<string>('');
   const [imagesBase64, setImagesBase64] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -71,7 +74,18 @@ export default function StoryForm() {
         coverEmoji: existingStory.coverEmoji,
         videoUrl: existingStory.videoUrl || "",
       });
-      setAudioBase64(existingStory.audioFile);
+
+      if (existingStory.audioFile) {
+        const isUrl = existingStory.audioFile.startsWith('http');
+        if (isUrl) {
+          setAudioMode('url');
+          setAudioUrl(existingStory.audioFile);
+        } else {
+          setAudioMode('file');
+          setAudioBase64(existingStory.audioFile);
+        }
+      }
+
       setImagesBase64(existingStory.images || []);
 
       if (existingStory.videoFile) {
@@ -105,7 +119,7 @@ export default function StoryForm() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const maxSize = 200 * 1024 * 1024; // 200 MB
+    const maxSize = 200 * 1024 * 1024;
     if (file.size > maxSize) {
       toast({ title: "Ескерту", description: "Видео файл тым үлкен (макс. 200 МБ). YouTube URL пайдаланыңыз.", variant: "destructive" });
       return;
@@ -118,11 +132,8 @@ export default function StoryForm() {
       await apiClient.uploadVideo(key, dataBase64);
       setVideoFileKey(key);
       setVideoFileName(file.name);
-
-      // Create a temporary preview URL
       const previewUrl = URL.createObjectURL(file);
       setVideoPreviewUrl(previewUrl);
-
       toast({ title: "✓ Видео жүктелді!", description: `${file.name} (${(file.size / 1024 / 1024).toFixed(1)} МБ)` });
     } catch {
       toast({ title: "Қате", description: "Видео жүктелмеді", variant: "destructive" });
@@ -151,6 +162,11 @@ export default function StoryForm() {
     setImagesBase64(prev => prev.filter((_, i) => i !== index));
   };
 
+  const getEffectiveAudio = (): string | undefined => {
+    if (audioMode === 'url') return audioUrl.trim() || undefined;
+    return audioBase64;
+  };
+
   const onSubmit = (data: FormValues) => {
     const videoFile = videoMode === 'file' ? videoFileKey : undefined;
     const videoUrl = videoMode === 'url' ? (data.videoUrl || undefined) : undefined;
@@ -160,7 +176,7 @@ export default function StoryForm() {
       ...data,
       videoUrl,
       videoFile,
-      audioFile: audioBase64,
+      audioFile: getEffectiveAudio(),
       images: imagesBase64,
       quizEnabled,
     }, {
@@ -174,6 +190,8 @@ export default function StoryForm() {
   if (isEdit && isLoadingStory) {
     return <div className="min-h-screen flex items-center justify-center text-2xl">⏳ Жүктелуде...</div>;
   }
+
+  const effectiveAudio = getEffectiveAudio();
 
   return (
     <div className="min-h-screen py-8 pb-24">
@@ -281,13 +299,12 @@ export default function StoryForm() {
                 <Sparkles className="text-accent w-5 h-5" /> Қосымша медиа
               </h3>
 
-              {/* VIDEO — with URL / File toggle */}
+              {/* VIDEO */}
               <div className="space-y-3">
                 <label className="font-bold text-foreground flex items-center gap-2">
                   <Video className="w-5 h-5 text-secondary" /> Видео
                 </label>
 
-                {/* Mode toggle */}
                 <div className="flex gap-2">
                   <button
                     type="button"
@@ -335,7 +352,7 @@ export default function StoryForm() {
                       />
                     </label>
                     <p className="text-xs text-muted-foreground font-medium">
-                      Максималды өлшем: 200 МБ. Браузер жапқанда видео қайта жүктеу қажет болуы мүмкін.
+                      Максималды өлшем: 200 МБ.
                     </p>
 
                     {videoPreviewUrl && (
@@ -361,28 +378,81 @@ export default function StoryForm() {
                 )}
               </div>
 
-              {/* Audio Upload */}
-              <div className="space-y-2">
+              {/* AUDIO — Дубляж / Дауыс жазба */}
+              <div className="space-y-3">
                 <label className="font-bold text-foreground flex items-center gap-2">
-                  <Music className="w-5 h-5 text-primary" /> Аудио жүктеу
+                  <Music className="w-5 h-5 text-primary" /> 🎙 Дубляж / Аудио дыбысы
                 </label>
-                <div className="flex items-center gap-4 flex-wrap">
-                  <label className="cursor-pointer inline-flex items-center gap-2 bg-white border-2 border-border hover:border-primary px-4 py-2 rounded-xl font-bold text-sm transition-all shadow-sm">
-                    <Music className="w-4 h-4 text-primary" />
-                    {isUploading ? 'Жүктелуде...' : 'Аудио таңдау'}
-                    <input type="file" accept="audio/*" className="hidden" onChange={handleAudioUpload} disabled={isUploading} />
-                  </label>
-                  {audioBase64 && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-green-600">✓ Аудио жүктелді</span>
-                      <button type="button" onClick={() => setAudioBase64(undefined)} className="text-xs text-destructive font-bold hover:underline">
-                        Өшіру
-                      </button>
-                    </div>
-                  )}
+                <p className="text-xs text-muted-foreground font-medium -mt-1">
+                  Ертегінің дауыстық оқылуы — балалар оқымай-ақ тыңдай алады
+                </p>
+
+                {/* Audio mode toggle */}
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setAudioMode('url')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all border-2 ${
+                      audioMode === 'url'
+                        ? 'bg-primary text-white border-primary'
+                        : 'bg-white border-border text-muted-foreground hover:border-primary/50'
+                    }`}
+                  >
+                    <Link2 className="w-4 h-4" /> Сілтеме (URL)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAudioMode('file')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all border-2 ${
+                      audioMode === 'file'
+                        ? 'bg-primary text-white border-primary'
+                        : 'bg-white border-border text-muted-foreground hover:border-primary/50'
+                    }`}
+                  >
+                    <Upload className="w-4 h-4" /> Файл жүктеу
+                  </button>
                 </div>
-                {audioBase64 && (
-                  <audio src={audioBase64} controls className="w-full h-10 mt-2" />
+
+                {audioMode === 'url' && (
+                  <div className="space-y-2">
+                    <input
+                      type="url"
+                      value={audioUrl}
+                      onChange={e => setAudioUrl(e.target.value)}
+                      className="w-full bg-white border-2 border-border rounded-xl py-2 px-4 focus:outline-none focus:border-primary transition-all"
+                      placeholder="https://example.com/audio.mp3"
+                    />
+                    {audioUrl.trim() && (
+                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                        <audio src={audioUrl.trim()} controls className="w-full h-10" />
+                      </motion.div>
+                    )}
+                  </div>
+                )}
+
+                {audioMode === 'file' && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-4 flex-wrap">
+                      <label className="cursor-pointer inline-flex items-center gap-2 bg-white border-2 border-border hover:border-primary px-4 py-2 rounded-xl font-bold text-sm transition-all shadow-sm">
+                        <Music className="w-4 h-4 text-primary" />
+                        {isUploading ? 'Жүктелуде...' : 'Аудио файл таңдау'}
+                        <input type="file" accept="audio/*" className="hidden" onChange={handleAudioUpload} disabled={isUploading} />
+                      </label>
+                      {audioBase64 && (
+                        <button type="button" onClick={() => setAudioBase64(undefined)} className="text-xs text-destructive font-bold hover:underline">
+                          ✕ Өшіру
+                        </button>
+                      )}
+                    </div>
+                    {audioBase64 && (
+                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-bold text-green-600">✓ Аудио жүктелді</span>
+                        </div>
+                        <audio src={audioBase64} controls className="w-full h-10" />
+                      </motion.div>
+                    )}
+                  </div>
                 )}
               </div>
 
