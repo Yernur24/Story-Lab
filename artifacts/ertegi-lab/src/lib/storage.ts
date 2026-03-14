@@ -11,6 +11,7 @@ export interface Story {
   coverEmoji: string;
   videoUrl?: string;
   videoFile?: string; // IndexedDB key for uploaded video blob
+  quizEnabled?: boolean;
   audioFile?: string;
   images?: string[];
   voiceRecordings?: string[];

@@ -47,6 +47,7 @@ export default function StoryForm() {
   const [videoFileName, setVideoFileName] = useState<string | undefined>();
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | undefined>();
   const [existingHasVideoFile, setExistingHasVideoFile] = useState(false);
+  const [quizEnabled, setQuizEnabled] = useState(true);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -80,6 +81,7 @@ export default function StoryForm() {
           setExistingHasVideoFile(exists);
         });
       }
+      setQuizEnabled(existingStory.quizEnabled !== false);
     }
   }, [existingStory, isEdit, form]);
 
