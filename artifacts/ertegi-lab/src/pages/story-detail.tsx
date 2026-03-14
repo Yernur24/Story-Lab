@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRoute } from "wouter";
-import { useStory, useAddVoiceRecording, useDeleteVoiceRecording, useToggleFavorite, useIncrementReadCount } from "@/hooks/use-stories";
+import { useStory, useAddVoiceRecording, useDeleteVoiceRecording, useToggleFavorite, useIncrementReadCount, useSaveStory } from "@/hooks/use-stories";
 import { ArrowLeft, Edit, Headphones, PlayCircle, Image as ImageIcon, BookOpen, Heart, Share2, Trash2, Check, ChevronLeft, ChevronRight, Gamepad2 } from "lucide-react";
 import { Link } from "wouter";
 import { AudioRecorder } from "@/components/AudioRecorder";
@@ -36,6 +36,7 @@ export default function StoryDetail() {
   const deleteVoiceRecording = useDeleteVoiceRecording();
   const toggleFavorite = useToggleFavorite();
   const incrementReadCount = useIncrementReadCount();
+  const saveStory = useSaveStory();
 
   const [activeTab, setActiveTab] = useState<'read' | 'listen' | 'watch' | 'record'>('read');
   const [copied, setCopied] = useState(false);
@@ -198,12 +199,29 @@ export default function StoryDetail() {
                 <Link href={`/edit/${story.id}`} className="inline-flex items-center gap-2 px-5 py-2 bg-white text-foreground font-bold rounded-xl shadow-sm border-2 border-border hover:bg-muted transition-colors">
                   <Edit className="w-4 h-4" /> Өңдеу
                 </Link>
-                <Link
-                  href={`/quiz/${story.id}`}
-                  className="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-xl shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all"
+                {story.quizEnabled ? (
+                  <Link
+                    href={`/quiz/${story.id}`}
+                    className="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-xl shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all"
+                  >
+                    <Gamepad2 className="w-4 h-4" /> 🎮 Ойын
+                  </Link>
+                ) : (
+                  <span className="inline-flex items-center gap-2 px-5 py-2 bg-muted text-muted-foreground font-bold rounded-xl border-2 border-dashed border-border cursor-not-allowed">
+                    <Gamepad2 className="w-4 h-4" /> 🎮 Ойын өшірулі
+                  </span>
+                )}
+                <button
+                  onClick={() => saveStory.mutate({ id: story.id, quizEnabled: !story.quizEnabled })}
+                  disabled={saveStory.isPending}
+                  className={`inline-flex items-center gap-2 px-3 py-2 text-xs font-bold rounded-xl border-2 transition-all ${story.quizEnabled ? 'border-primary/30 text-primary bg-primary/5 hover:bg-primary/10' : 'border-border text-muted-foreground bg-muted/40 hover:bg-muted'}`}
+                  title={story.quizEnabled ? 'Ойынды өшіру' : 'Ойынды қосу'}
                 >
-                  <Gamepad2 className="w-4 h-4" /> 🎮 Ойын
-                </Link>
+                  <span className={`w-5 h-3 rounded-full relative inline-block transition-colors ${story.quizEnabled ? 'bg-primary' : 'bg-muted-foreground/40'}`}>
+                    <span className={`absolute top-0.5 w-2 h-2 rounded-full bg-white shadow transition-transform ${story.quizEnabled ? 'translate-x-2.5' : 'translate-x-0.5'}`} />
+                  </span>
+                  {story.quizEnabled ? 'Өшіру' : 'Қосу'}
+                </button>
               </div>
             </div>
           </div>

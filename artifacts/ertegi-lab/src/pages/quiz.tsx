@@ -134,6 +134,39 @@ export default function QuizPage() {
     );
   }
 
+  if (!story.quizEnabled) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center text-center px-4">
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 200 }}
+          className="text-8xl mb-6"
+        >
+          🔒
+        </motion.div>
+        <h2 className="text-3xl font-display font-extrabold mb-3">Ойын өшірулі</h2>
+        <p className="text-muted-foreground font-medium mb-6 max-w-xs">
+          Бұл ертегі үшін викторина қосылмаған. Ойынды іске қосу үшін ертегіні өңдеңіз.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Link
+            href={`/story/${id}`}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white font-bold rounded-xl hover:-translate-y-0.5 transition-all"
+          >
+            ← Ертегіге қайту
+          </Link>
+          <Link
+            href={`/edit/${id}`}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-border text-foreground font-bold rounded-xl hover:bg-muted transition-all"
+          >
+            ✏️ Өңдеу
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   const totalQuestions = questions.length;
   const progress = totalQuestions > 0 ? ((currentQ) / totalQuestions) * 100 : 0;
   const q = questions[currentQ];

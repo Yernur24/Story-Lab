@@ -6,7 +6,7 @@ import { z } from "zod";
 import { useSaveStory, useStory } from "@/hooks/use-stories";
 import { fileToBase64, StoryCategory } from "@/lib/storage";
 import { apiClient } from "@/lib/api-client";
-import { ArrowLeft, Save, Image as ImageIcon, Music, Video, Sparkles, Link2, Upload } from "lucide-react";
+import { ArrowLeft, Save, Image as ImageIcon, Music, Video, Sparkles, Link2, Upload, Gamepad2 } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
@@ -162,6 +162,7 @@ export default function StoryForm() {
       videoFile,
       audioFile: audioBase64,
       images: imagesBase64,
+      quizEnabled,
     }, {
       onSuccess: (saved) => {
         toast({ title: "🎉 Тамаша!", description: "Ертегі сәтті сақталды!" });
@@ -420,6 +421,32 @@ export default function StoryForm() {
                     ))}
                   </div>
                 )}
+              </div>
+            </div>
+
+            {/* Quiz Toggle */}
+            <div className="bg-gradient-to-r from-primary/5 to-secondary/5 border-2 border-border rounded-2xl p-5">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-xl ${quizEnabled ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'} transition-colors`}>
+                    <Gamepad2 className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="font-extrabold text-foreground">🎮 Ойын (Викторина)</p>
+                    <p className="text-sm text-muted-foreground">
+                      {quizEnabled ? 'Ойын қосулы — оқырмандар тест тапсыра алады' : 'Ойын өшірулі'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setQuizEnabled(v => !v)}
+                  className={`relative w-14 h-8 rounded-full transition-colors duration-300 focus:outline-none flex-shrink-0 ${quizEnabled ? 'bg-primary' : 'bg-muted-foreground/30'}`}
+                >
+                  <span
+                    className={`absolute top-1 left-1 w-6 h-6 rounded-full bg-white shadow-md transition-transform duration-300 ${quizEnabled ? 'translate-x-6' : 'translate-x-0'}`}
+                  />
+                </button>
               </div>
             </div>
 
