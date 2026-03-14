@@ -4,6 +4,13 @@
 
 pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
 
+## Deployment
+
+- **Target**: Autoscale
+- **Build**: `pnpm install && pnpm --filter @workspace/ertegi-lab build && pnpm --filter @workspace/api-server build`
+- **Run**: `node artifacts/api-server/dist/index.cjs`
+- In production, the API server also serves the frontend static files from `artifacts/ertegi-lab/dist/public`.
+
 ## Stack
 
 - **Monorepo tool**: pnpm workspaces

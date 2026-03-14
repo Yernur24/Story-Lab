@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { useStories, useDeleteStory, useToggleFavorite } from "@/hooks/use-stories";
-import { BookOpen, Tv, Image as ImageIcon, Sparkles, Search, Trash2, PlusCircle, Heart, ArrowUpDown } from "lucide-react";
+import { BookOpen, Tv, Image as ImageIcon, Sparkles, Search, Trash2, PlusCircle, Heart, ArrowUpDown, AlertTriangle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { StoryCategory } from "@/lib/storage";
 
@@ -16,6 +16,8 @@ export default function Library() {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortType>('newest');
   const [showSort, setShowSort] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const deleteTargetStory = stories?.find(s => s.id === deleteTargetId);
 
   const allStories = stories || [];
 
@@ -262,9 +264,7 @@ export default function Library() {
                   <button
                     onClick={(e) => {
                       e.preventDefault();
-                      if (confirm('Бұл ертегіні өшіруге сенімдісіз бе?')) {
-                        deleteStory.mutate(story.id);
-                      }
+                      setDeleteTargetId(story.id);
                     }}
                     className="absolute top-4 right-4 bg-white/90 text-destructive p-2 rounded-full opacity-0 group-hover:opacity-100 hover:bg-destructive hover:text-white transition-all shadow-md z-10"
                     title="Өшіру"
@@ -301,6 +301,60 @@ export default function Library() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteTargetId && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setDeleteTargetId(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.85, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.85, y: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="bg-white rounded-3xl border-4 border-border shadow-2xl max-w-sm w-full p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex flex-col items-center text-center gap-3">
+                <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-1">
+                  <AlertTriangle className="w-8 h-8 text-destructive" />
+                </div>
+                <h2 className="text-xl font-display font-extrabold text-foreground">
+                  Өшіруге сенімдісіз бе?
+                </h2>
+                <p className="text-muted-foreground font-medium text-sm leading-relaxed">
+                  <span className="font-bold text-foreground">«{deleteTargetStory?.title}»</span> ертегісі біржола жойылады. Бұл әрекетті кері қайтару мүмкін емес.
+                </p>
+              </div>
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setDeleteTargetId(null)}
+                  className="flex-1 py-3 rounded-2xl border-4 border-border font-bold text-foreground hover:border-primary/50 transition-all"
+                >
+                  Болдырмау
+                </button>
+                <button
+                  onClick={() => {
+                    if (deleteTargetId) {
+                      deleteStory.mutate(deleteTargetId);
+                      setDeleteTargetId(null);
+                    }
+                  }}
+                  disabled={deleteStory.isPending}
+                  className="flex-1 py-3 rounded-2xl bg-destructive text-white font-bold shadow-[0_4px_0_hsl(0,70%,35%)] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all disabled:opacity-60"
+                >
+                  {deleteStory.isPending ? 'Өшірілуде...' : 'Иә, өшіру'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
