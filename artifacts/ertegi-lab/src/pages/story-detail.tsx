@@ -1,24 +1,41 @@
+import { useEffect, useState } from "react";
 import { useRoute } from "wouter";
-import { useStory, useAddVoiceRecording } from "@/hooks/use-stories";
-import { ArrowLeft, Edit, Headphones, PlayCircle, Image as ImageIcon, BookOpen } from "lucide-react";
+import { useStory, useAddVoiceRecording, useDeleteVoiceRecording, useToggleFavorite, useIncrementReadCount } from "@/hooks/use-stories";
+import { ArrowLeft, Edit, Headphones, PlayCircle, Image as ImageIcon, BookOpen, Heart, Share2, Trash2, Check } from "lucide-react";
 import { Link } from "wouter";
 import { AudioRecorder } from "@/components/AudioRecorder";
 import { Slideshow } from "@/components/Slideshow";
-import { motion } from "framer-motion";
-import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function StoryDetail() {
   const [, params] = useRoute("/story/:id");
   const id = params?.id || "";
   const { data: story, isLoading, error } = useStory(id);
   const addVoiceRecording = useAddVoiceRecording();
-  
-  const [activeTab, setActiveTab] = useState<'read' | 'listen' | 'watch'>('read');
+  const deleteVoiceRecording = useDeleteVoiceRecording();
+  const toggleFavorite = useToggleFavorite();
+  const incrementReadCount = useIncrementReadCount();
+
+  const [activeTab, setActiveTab] = useState<'read' | 'listen' | 'watch' | 'record'>('read');
+  const [copied, setCopied] = useState(false);
+  const [deletingIndex, setDeletingIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (id) {
+      incrementReadCount.mutate(id);
+    }
+  }, [id]);
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin text-6xl">🌟</div>
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="text-6xl"
+        >
+          🌟
+        </motion.div>
       </div>
     );
   }
@@ -39,49 +56,123 @@ export default function StoryDetail() {
     addVoiceRecording.mutate({ id, audioStr: base64 });
   };
 
+  const handleDeleteRecording = (index: number) => {
+    if (!confirm('Бұл жазбаны өшіруге сенімдісіз бе?')) return;
+    setDeletingIndex(index);
+    deleteVoiceRecording.mutate({ id, index }, {
+      onSettled: () => setDeletingIndex(null),
+    });
+  };
+
+  const handleShare = () => {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {
+      alert(`Сілтемені көшіріңіз: ${url}`);
+    });
+  };
+
   const getEmbedUrl = (url: string) => {
     if (url.includes('youtube.com/watch?v=')) {
       return url.replace('watch?v=', 'embed/');
     }
     if (url.includes('youtu.be/')) {
-      return url.replace('youtu.be/', 'youtube.com/embed/');
+      return 'https://www.youtube.com/embed/' + url.split('youtu.be/')[1];
     }
     return url;
   };
+
+  const hasMedia = !!(story.videoUrl || (story.images && story.images.length > 0));
+  const hasAudio = !!(story.audioFile || (story.voiceRecordings && story.voiceRecordings.length > 0));
+
+  const tabs = [
+    { id: 'read' as const, label: 'Оқу', icon: BookOpen, always: true },
+    { id: 'listen' as const, label: 'Тыңдау', icon: Headphones, always: hasAudio },
+    { id: 'watch' as const, label: 'Көру', icon: PlayCircle, always: hasMedia },
+    { id: 'record' as const, label: 'Жазу 🎙', icon: null, always: true },
+  ];
 
   return (
     <div className="min-h-screen pb-24">
       {/* Header Banner */}
       <div className="bg-gradient-to-b from-primary/10 to-transparent pt-8 pb-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
-          <Link href="/library" className="inline-flex items-center gap-2 text-muted-foreground font-bold hover:text-foreground transition-colors mb-6">
-            <ArrowLeft className="w-5 h-5" /> Артқа
-          </Link>
-          
+          <div className="flex items-center justify-between mb-6">
+            <Link href="/library" className="inline-flex items-center gap-2 text-muted-foreground font-bold hover:text-foreground transition-colors">
+              <ArrowLeft className="w-5 h-5" /> Артқа
+            </Link>
+
+            <div className="flex items-center gap-2">
+              {/* Share button */}
+              <button
+                onClick={handleShare}
+                className="flex items-center gap-2 bg-white border-2 border-border px-4 py-2 rounded-xl font-bold text-sm hover:border-secondary transition-all shadow-sm"
+              >
+                {copied ? <Check className="w-4 h-4 text-green-500" /> : <Share2 className="w-4 h-4" />}
+                {copied ? 'Көшірілді!' : 'Бөлісу'}
+              </button>
+
+              {/* Favorite button */}
+              <button
+                onClick={() => toggleFavorite.mutate(story.id)}
+                className={`p-2 rounded-xl border-2 transition-all shadow-sm ${
+                  story.isFavorite
+                    ? 'bg-rose-500 border-rose-500 text-white'
+                    : 'bg-white border-border text-muted-foreground hover:text-rose-500 hover:border-rose-300'
+                }`}
+                title={story.isFavorite ? 'Таңдаулылардан алу' : 'Таңдаулыларға қосу'}
+              >
+                <Heart className={`w-5 h-5 ${story.isFavorite ? 'fill-current' : ''}`} />
+              </button>
+            </div>
+          </div>
+
           <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.8, rotate: -5 }}
               animate={{ scale: 1, rotate: 0 }}
-              className="w-32 h-32 md:w-40 md:h-40 bg-white rounded-3xl shadow-xl border-4 border-white flex items-center justify-center text-7xl flex-shrink-0"
+              className="w-32 h-32 md:w-40 md:h-40 bg-white rounded-3xl shadow-xl border-4 border-white flex items-center justify-center text-7xl flex-shrink-0 overflow-hidden"
             >
-              {story.coverEmoji}
+              {story.images && story.images.length > 0 ? (
+                <img src={story.images[0]} alt="" className="w-full h-full object-cover" />
+              ) : (
+                story.coverEmoji
+              )}
             </motion.div>
-            
+
             <div className="text-center md:text-left flex-1">
-              <div className="inline-block px-3 py-1 bg-white text-secondary font-extrabold text-sm rounded-full mb-3 shadow-sm border-2 border-border">
-                {story.category === 'fairy-tale' ? 'Ертегі' : 
-                 story.category === 'comic' ? 'Комикс' : 
-                 story.category === 'cartoon' ? 'Мультфильм' : 'Басқа'}
+              <div className="flex flex-wrap gap-2 justify-center md:justify-start mb-3">
+                <span className="inline-block px-3 py-1 bg-white text-secondary font-extrabold text-sm rounded-full shadow-sm border-2 border-border">
+                  {story.category === 'fairy-tale' ? '📖 Ертегі' :
+                   story.category === 'comic' ? '💥 Комикс' :
+                   story.category === 'cartoon' ? '🎬 Мультфильм' : '✨ Басқа'}
+                </span>
+                {story.readCount ? (
+                  <span className="inline-block px-3 py-1 bg-white text-muted-foreground font-bold text-sm rounded-full shadow-sm border-2 border-border">
+                    👁 {story.readCount} рет оқылды
+                  </span>
+                ) : null}
+                {story.voiceRecordings && story.voiceRecordings.length > 0 && (
+                  <span className="inline-block px-3 py-1 bg-primary/10 text-primary font-bold text-sm rounded-full border-2 border-primary/20">
+                    🎙 {story.voiceRecordings.length} жазба
+                  </span>
+                )}
               </div>
+
               <h1 className="text-4xl md:text-5xl font-display font-extrabold text-foreground mb-4 leading-tight">
                 {story.title}
               </h1>
               <p className="text-lg text-muted-foreground font-medium mb-6">
                 {story.description}
               </p>
-              
-              <Link href={`/edit/${story.id}`} className="inline-flex items-center gap-2 px-5 py-2 bg-white text-foreground font-bold rounded-xl shadow-sm border-2 border-border hover:bg-muted transition-colors">
-                <Edit className="w-4 h-4" /> Өңдеу (Edit)
+
+              <Link
+                href={`/edit/${story.id}`}
+                className="inline-flex items-center gap-2 px-5 py-2 bg-white text-foreground font-bold rounded-xl shadow-sm border-2 border-border hover:bg-muted transition-colors"
+              >
+                <Edit className="w-4 h-4" /> Өңдеу
               </Link>
             </div>
           </div>
@@ -89,139 +180,199 @@ export default function StoryDetail() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 -mt-4">
-        {/* Interactive Tabs */}
-        <div className="flex flex-wrap justify-center gap-2 md:gap-4 mb-8">
-          <button 
-            onClick={() => setActiveTab('read')}
-            className={`px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all ${
-              activeTab === 'read' 
-                ? 'bg-primary text-white shadow-[0_4px_0_hsl(var(--primary-border))] translate-y-[-2px]' 
-                : 'bg-white border-2 border-border text-muted-foreground hover:bg-muted'
-            }`}
-          >
-            <BookOpen className="w-5 h-5" /> Оқу (Read)
-          </button>
-          
-          {(story.audioFile || story.voiceRecordings?.length) && (
-            <button 
-              onClick={() => setActiveTab('listen')}
-              className={`px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all ${
-                activeTab === 'listen' 
-                  ? 'bg-secondary text-white shadow-[0_4px_0_hsl(190,90%,40%)] translate-y-[-2px]' 
+        {/* Tabs */}
+        <div className="flex flex-wrap justify-center gap-2 md:gap-3 mb-8">
+          {tabs.filter(t => t.always).map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-5 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all text-sm md:text-base ${
+                activeTab === tab.id
+                  ? tab.id === 'record'
+                    ? 'bg-rose-500 text-white shadow-[0_4px_0_hsl(350,80%,40%)] -translate-y-0.5'
+                    : 'bg-primary text-white shadow-[0_4px_0_hsl(var(--primary-border))] -translate-y-0.5'
                   : 'bg-white border-2 border-border text-muted-foreground hover:bg-muted'
               }`}
             >
-              <Headphones className="w-5 h-5" /> Тыңдау (Listen)
+              {tab.icon && <tab.icon className="w-5 h-5" />}
+              {tab.label}
             </button>
-          )}
-          
-          {(story.videoUrl || (story.images && story.images.length > 0)) && (
-            <button 
-              onClick={() => setActiveTab('watch')}
-              className={`px-6 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all ${
-                activeTab === 'watch' 
-                  ? 'bg-accent text-accent-foreground shadow-[0_4px_0_hsl(45,100%,40%)] translate-y-[-2px]' 
-                  : 'bg-white border-2 border-border text-muted-foreground hover:bg-muted'
-              }`}
-            >
-              <PlayCircle className="w-5 h-5" /> Көру (Watch)
-            </button>
-          )}
+          ))}
         </div>
 
         {/* Tab Content */}
-        <motion.div 
-          key={activeTab}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="bg-white rounded-3xl shadow-lg border-4 border-border p-6 md:p-10"
-        >
-          {activeTab === 'read' && (
-            <div className="prose prose-lg md:prose-xl max-w-none font-sans text-foreground leading-relaxed">
-              {story.content.split('\n').map((paragraph, i) => (
-                <p key={i} className="mb-6">{paragraph}</p>
-              ))}
-              
-              {/* Record Voice Section at bottom of reading */}
-              <div className="mt-16 pt-10 border-t-4 border-dashed border-border">
-                <AudioRecorder 
-                  onSave={handleSaveRecording} 
-                  isSaving={addVoiceRecording.isPending} 
-                />
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'listen' && (
-            <div className="space-y-8">
-              {story.audioFile && (
-                <div className="bg-muted p-6 rounded-2xl border-2 border-border">
-                  <h3 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
-                    <Headphones className="text-secondary" /> Түпнұсқа аудио (Original)
-                  </h3>
-                  <audio src={story.audioFile} controls className="w-full" />
-                </div>
-              )}
-              
-              {story.voiceRecordings && story.voiceRecordings.length > 0 && (
-                <div className="space-y-4">
-                  <h3 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
-                    <MicIcon className="text-primary" /> Сенің жазбаларың (Your recordings)
-                  </h3>
-                  {story.voiceRecordings.map((rec, i) => (
-                    <div key={i} className="bg-primary/5 p-4 rounded-xl border-2 border-primary/20 flex flex-col sm:flex-row items-center gap-4">
-                      <div className="font-bold text-primary w-24">Жазба #{i + 1}</div>
-                      <audio src={rec} controls className="w-full flex-1 h-10" />
-                    </div>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.25 }}
+            className="bg-white rounded-3xl shadow-lg border-4 border-border p-6 md:p-10"
+          >
+            {/* READ tab */}
+            {activeTab === 'read' && (
+              <div>
+                <div className="prose prose-lg md:prose-xl max-w-none font-sans text-foreground leading-relaxed">
+                  {story.content.split('\n').map((paragraph, i) => (
+                    paragraph.trim() ? <p key={i} className="mb-5">{paragraph}</p> : <br key={i} />
                   ))}
                 </div>
-              )}
-            </div>
-          )}
+              </div>
+            )}
 
-          {activeTab === 'watch' && (
-            <div className="space-y-12">
-              {story.videoUrl && (
-                <div>
-                  <h3 className="font-display text-xl font-bold mb-4">Видео</h3>
-                  <div className="aspect-video w-full rounded-2xl overflow-hidden border-4 border-border shadow-md">
-                    {story.videoUrl.includes('youtube.com') || story.videoUrl.includes('youtu.be') ? (
-                      <iframe 
-                        src={getEmbedUrl(story.videoUrl)} 
-                        className="w-full h-full"
-                        allowFullScreen 
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      />
-                    ) : (
-                      <video src={story.videoUrl} controls className="w-full h-full bg-black" />
-                    )}
+            {/* LISTEN tab */}
+            {activeTab === 'listen' && (
+              <div className="space-y-8">
+                {story.audioFile && (
+                  <div className="bg-muted p-6 rounded-2xl border-2 border-border">
+                    <h3 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
+                      <Headphones className="text-secondary" /> Түпнұсқа аудио
+                    </h3>
+                    <audio src={story.audioFile} controls className="w-full" />
                   </div>
-                </div>
-              )}
+                )}
 
-              {story.images && story.images.length > 0 && (
-                <div>
-                  <h3 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
-                    <ImageIcon className="text-accent-foreground" /> Слайд-шоу
-                  </h3>
-                  <Slideshow images={story.images} />
+                {story.voiceRecordings && story.voiceRecordings.length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="font-display text-xl font-bold flex items-center gap-2">
+                      🎙 Менің жазбаларым ({story.voiceRecordings.length})
+                    </h3>
+                    {story.voiceRecordings.map((rec, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 1 }}
+                        animate={{ opacity: deletingIndex === i ? 0.4 : 1 }}
+                        className="bg-primary/5 p-4 rounded-xl border-2 border-primary/20 flex items-center gap-4"
+                      >
+                        <div className="font-bold text-primary w-10 text-center">#{i + 1}</div>
+                        <audio src={rec} controls className="flex-1 h-10 min-w-0" />
+                        <button
+                          onClick={() => handleDeleteRecording(i)}
+                          disabled={deletingIndex !== null}
+                          className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all flex-shrink-0 disabled:opacity-50"
+                          title="Жазбаны өшіру"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+
+                {!story.audioFile && (!story.voiceRecordings || story.voiceRecordings.length === 0) && (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <div className="text-5xl mb-4">🎧</div>
+                    <p className="font-bold text-lg">Аудио жоқ</p>
+                    <p className="text-sm mt-2">«Жазу» бетіне өтіп, өз даусыңызды жазыңыз!</p>
+                    <button
+                      onClick={() => setActiveTab('record')}
+                      className="mt-4 px-5 py-2 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition-colors"
+                    >
+                      🎙 Жазуды бастау
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* WATCH tab */}
+            {activeTab === 'watch' && (
+              <div className="space-y-10">
+                {story.videoUrl ? (
+                  <div>
+                    <h3 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
+                      🎬 Мультфильм / Видео
+                    </h3>
+                    <div className="aspect-video w-full rounded-2xl overflow-hidden border-4 border-border shadow-md">
+                      {story.videoUrl.includes('youtube.com') || story.videoUrl.includes('youtu.be') ? (
+                        <iframe
+                          src={getEmbedUrl(story.videoUrl)}
+                          className="w-full h-full"
+                          allowFullScreen
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        />
+                      ) : (
+                        <video src={story.videoUrl} controls className="w-full h-full bg-black" />
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+
+                {story.images && story.images.length > 0 && (
+                  <div>
+                    <h3 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
+                      <ImageIcon className="text-secondary" /> Слайд-шоу ({story.images.length} сурет)
+                    </h3>
+                    <Slideshow images={story.images} />
+                  </div>
+                )}
+
+                {!hasMedia && (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <div className="text-5xl mb-4">🎬</div>
+                    <p className="font-bold text-lg">Видео немесе слайд-шоу жоқ</p>
+                    <p className="text-sm mt-2">Өңдеу арқылы YouTube сілтемесін немесе суреттерді қосыңыз</p>
+                    <Link
+                      href={`/edit/${story.id}`}
+                      className="inline-flex items-center gap-2 mt-4 px-5 py-2 bg-secondary text-white font-bold rounded-xl hover:bg-secondary/90 transition-colors"
+                    >
+                      <Edit className="w-4 h-4" /> Медиа қосу
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* RECORD tab */}
+            {activeTab === 'record' && (
+              <div className="space-y-8">
+                <div className="text-center mb-6">
+                  <h3 className="font-display text-2xl font-extrabold mb-2">🎙 Өз даусыңды жаз!</h3>
+                  <p className="text-muted-foreground font-medium">
+                    Ертегіні оқып, микрофонға жазып алыңыз. Жазба сақталады!
+                  </p>
                 </div>
-              )}
-            </div>
-          )}
-        </motion.div>
+
+                <AudioRecorder
+                  onSave={handleSaveRecording}
+                  isSaving={addVoiceRecording.isPending}
+                />
+
+                {addVoiceRecording.isSuccess && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="text-center p-4 bg-green-50 border-2 border-green-200 rounded-2xl"
+                  >
+                    <p className="font-bold text-green-700">🎉 Жазба сәтті сақталды!</p>
+                    <button
+                      onClick={() => setActiveTab('listen')}
+                      className="mt-2 text-sm font-bold text-primary underline"
+                    >
+                      Тыңдауға өту →
+                    </button>
+                  </motion.div>
+                )}
+
+                {story.voiceRecordings && story.voiceRecordings.length > 0 && (
+                  <div className="bg-muted/30 rounded-2xl p-4 border-2 border-dashed border-border">
+                    <p className="font-bold text-center text-muted-foreground">
+                      🎙 Сақталған жазбалар: <span className="text-primary">{story.voiceRecordings.length}</span>
+                    </p>
+                    <button
+                      onClick={() => setActiveTab('listen')}
+                      className="w-full mt-2 py-2 text-sm font-bold text-primary hover:bg-primary/5 rounded-xl transition-colors"
+                    >
+                      Тыңдауға өту →
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   );
-}
-
-function MicIcon(props: any) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
-      <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-      <line x1="12" x2="12" y1="19" y2="22"/>
-    </svg>
-  )
 }

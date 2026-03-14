@@ -10,9 +10,11 @@ export interface Story {
   content: string;
   coverEmoji: string;
   videoUrl?: string;
-  audioFile?: string; // base64
-  images?: string[]; // array of base64
-  voiceRecordings?: string[]; // array of base64
+  audioFile?: string;
+  images?: string[];
+  voiceRecordings?: string[];
+  isFavorite?: boolean;
+  readCount?: number;
   createdAt: number;
 }
 
@@ -24,28 +26,86 @@ const SEED_STORIES: Story[] = [
     title: 'Алтын Балық',
     category: 'fairy-tale',
     description: 'Шал мен кемпірдің және барлық тілекті орындайтын алтын балықтың ғажайып ертегісі.',
-    content: 'Ерте, ерте, ертеде, көк теңіздің жағасында бір шал мен кемпір өмір сүріпті. Олар өте кедей болыпты. Бір күні шал теңізге тор салып, бір кішкентай алтын балық ұстап алады. Балық адамша тіл қатып: "Ата, мені теңізге жіберші, мен сенің кез келген тілегіңді орындаймын!" - дейді...',
+    content: 'Ерте, ерте, ертеде, көк теңіздің жағасында бір шал мен кемпір өмір сүріпті. Олар өте кедей болыпты.\n\nБір күні шал теңізге тор салып, бір кішкентай алтын балық ұстап алады. Балық адамша тіл қатып: "Ата, мені теңізге жіберші, мен сенің кез келген тілегіңді орындаймын!" - дейді.\n\nШал жаны ашып балықты теңізге жіберіп жібереді. Кемпір болса жаңа шөміш сұрайды. Балық орындайды. Сонан соң жаңа үй, байлық, ең соңында патшайым болғысы келеді...\n\nБірақ ашкөз кемпірдің тілегі бітпейді. Ең соңында барлығы кетіп, тағы да ескі жерлеріне оралады. Бұл ертегі ашкөздіктің жаман екенін үйретеді.',
     coverEmoji: '🐠',
-    createdAt: Date.now() - 100000,
+    isFavorite: true,
+    readCount: 5,
+    createdAt: Date.now() - 500000,
   },
   {
     id: uuidv4(),
-    title: 'Батыр Ер',
-    category: 'comic',
-    description: 'Жауыз айдаһарды жеңуге аттанған батыр туралы қызықты оқиға.',
-    content: 'Баяғы өткен заманда, бір үлкен таудың басында жауыз айдаһар өмір сүріпті. Ол ауыл адамдарына көп зиян тигізіпті. Содан бір күні ауылдың ең батыр жігіті Ерасыл айдаһармен жекпе-жекке шығуға бел буады. Ол өзінің жүйрік тұлпарына мініп, қолына алмас қылышын алып, жолға шығады...',
+    title: 'Батыр Ер Тостик',
+    category: 'fairy-tale',
+    description: 'Ер Тостик — қазақтың ең танымал батыры. Оның ғажайып іс-қимылдары туралы ертегі.',
+    content: 'Ерте заманда бір шалдың Ер Тостик деген баласы болыпты. Ол туа салысымен жерден тіршілік табады, аттарды бағады.\n\nКүндердің бір күні жауыз мыстан кемпір ауылдың балаларын ұрлайды. Ер Тостик оларды іздеп жолға шығады.\n\nЖолда ол сиқырлы жылқы Тайбурылды кездестіреді. Тайбурыл оған: "Мінші, батырым, мен сені апарамын!" — дейді.\n\nЕр Тостик мыстан кемпірмен айқасып, балаларды азат етеді. Ел оны қарсы алып, той жасайды. Батыр үнемі халқы үшін еңбек етеді.',
     coverEmoji: '🦸‍♂️',
-    createdAt: Date.now() - 50000,
+    readCount: 3,
+    createdAt: Date.now() - 400000,
   },
   {
     id: uuidv4(),
     title: 'Сиқырлы Орман',
-    category: 'cartoon',
+    category: 'fairy-tale',
     description: 'Сөйлейтін ағаштар мен мейірімді жануарлар мекендейтін орман.',
-    content: 'Бір кішкентай қыз орманға жидек теруге шығып, адасып қалады. Кенеттен ол бір ғажайып алаңқайға тап болады. Ондағы ағаштар ән салып, гүлдер билеп жүр екен. Бір ақ қоян секіріп келіп: "Қош келдің, сиқырлы орманға!" - депті.',
+    content: 'Бір кішкентай қыз орманға жидек теруге шығып, адасып қалады.\n\nКенеттен ол бір ғажайып алаңқайға тап болады. Ондағы ағаштар ән салып, гүлдер билеп жүр екен.\n\nБір ақ қоян секіріп келіп: "Қош келдің, сиқырлы орманға!" — депті. Ол қызды үйіне дейін бастап апарады.\n\nОрман оның достары болды. Ол енді жалғыздық сезінбейді.',
     coverEmoji: '🌳',
-    createdAt: Date.now(),
-  }
+    readCount: 2,
+    createdAt: Date.now() - 300000,
+  },
+  {
+    id: uuidv4(),
+    title: 'Маша мен Аю',
+    category: 'cartoon',
+    description: 'Қызғылт киім киген қызалақ Маша мен оның досы Аю туралы күлкілі мультфильм.',
+    content: 'Маша — өте қызық, қуаты мол, тентек қызалақ. Ол орманда тұратын үлкен мейірімді Аюмен дос болып алады.\n\nМаша үнемі Аюдың үйіне келіп, оның тамақтарын жейді, ойыншықтарымен ойнайды.\n\nАю болса Машаны жақсы көреді, бірақ оның тентектіктері кейде шаршатады.\n\nБірге олар көптеген қызықты оқиғаларды басынан өткереді. Достық — ең бағалы нәрсе!',
+    coverEmoji: '🐻',
+    videoUrl: 'https://www.youtube.com/watch?v=LvJiMCNDEMI',
+    isFavorite: true,
+    readCount: 8,
+    createdAt: Date.now() - 200000,
+  },
+  {
+    id: uuidv4(),
+    title: 'Пеппа Шошқа',
+    category: 'cartoon',
+    description: 'Кішкентай шошқа Пеппа мен оның отбасының күнделікті өмірі туралы мультфильм.',
+    content: 'Пеппа — кішкентай шошқа. Оның Жорж деген ағасы, Мама Шошқа мен Папа Шошқа бар.\n\nПеппа мектепке барады, досымен ойнайды, саяхатқа шығады.\n\nОның ең ұнататын ісі — лас шұңқырда секіру! Мамасы ренжіп кетсе де Пеппа тоқтамайды.\n\nПеппаның ертегілері балаларға достық, үлкенді сыйлау, табиғатты сүю туралы үйретеді.',
+    coverEmoji: '🐷',
+    videoUrl: 'https://www.youtube.com/watch?v=GJXDGdFa94o',
+    readCount: 6,
+    createdAt: Date.now() - 150000,
+  },
+  {
+    id: uuidv4(),
+    title: 'Робокар Поли',
+    category: 'cartoon',
+    description: 'Сиқырлы машиналар мен олардың адамдарға көмек ету туралы ертегісі.',
+    content: 'Брум мен оның достары — сиқырлы роботтар! Олар адамдар қиналғанда үнемі көмекке келеді.\n\nПоли — ақылды полиция машинасы. Рой — жылдам жедел жәрдем. Амбер — ұшқыш.\n\nКүн сайын олар қалада тәртіп сақтап, балаларға дос болады.\n\nБіріге жұмыс істеу — мықты команданың сыры!',
+    coverEmoji: '🚓',
+    videoUrl: 'https://www.youtube.com/watch?v=8_vJHCbF9g0',
+    readCount: 4,
+    createdAt: Date.now() - 100000,
+  },
+  {
+    id: uuidv4(),
+    title: 'Батыр Ер мен Айдаһар',
+    category: 'comic',
+    description: 'Жауыз айдаһарды жеңуге аттанған батыр туралы қызықты комикс оқиғасы.',
+    content: 'ТАРАУ 1: ШАҚЫРУ\nАуылда үлкен үрей туды! Қызыл айдаһар тауда пайда болып, ауылдықтарды қорқытып жатыр.\n\nТАРАУ 2: ЖОЛҒА ШЫҒУ\nЖас батыр Арман қылышын алып жолға шықты. Жолда ол сиқырлы жебесі бар садақшыны кездестірді.\n\nТАРАУ 3: ШАЙҚАС\nАйдаһармен шайқас ұзаққа созылды. Арман батылдығын жоғалтпады.\n\nТАРАУ 4: ЖЕҢІС\nАрман айдаһарды жеңіп, ауылға оралды. Барлық ел оны қарсы алып, той жасады.',
+    coverEmoji: '🐲',
+    readCount: 7,
+    createdAt: Date.now() - 50000,
+  },
+  {
+    id: uuidv4(),
+    title: 'Ғарышкер Аспан',
+    category: 'comic',
+    description: 'Кішкентай ғарышкердің жұлдыздар арасындағы саяхаты туралы комикс.',
+    content: 'БАСТАУЫ\nАспан — 8 жасар ғарышкер. Оның ракетасы — ескі теңге қорабынан жасалған!\n\nЖОЛ\nАспан жұлдыздарға ұшып кетті. Жолда ол кішкентай жасыл инопланетяндарды кездестірді.\n\nДОСТЫҚ\nОлар тіл таппаса да, күлкімен тіл табысты. Аспан оларға жер туралы айтты.\n\nҮЙГЕ ҚАЙТУ\nАспан үйіне оралып, барлығына жаңа достары туралы айтты. Әркімнің армандауға құқығы бар!',
+    coverEmoji: '🚀',
+    readCount: 5,
+    createdAt: Date.now() - 25000,
+  },
 ];
 
 export const storage = {
@@ -70,9 +130,8 @@ export const storage = {
 
   saveStory: (story: Omit<Story, 'id' | 'createdAt'> & { id?: string }): Story => {
     const stories = storage.getStories();
-    
+
     if (story.id) {
-      // Update
       const index = stories.findIndex(s => s.id === story.id);
       if (index !== -1) {
         const updatedStory = { ...stories[index], ...story } as Story;
@@ -81,15 +140,14 @@ export const storage = {
         return updatedStory;
       }
     }
-    
-    // Create
+
     const newStory: Story = {
       ...story,
       id: uuidv4(),
       createdAt: Date.now(),
     } as Story;
-    
-    stories.unshift(newStory); // Add to beginning
+
+    stories.unshift(newStory);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(stories));
     return newStory;
   },
@@ -103,15 +161,37 @@ export const storage = {
   addVoiceRecording: (storyId: string, base64Audio: string): Story | undefined => {
     const story = storage.getStory(storyId);
     if (!story) return undefined;
-
     const recordings = story.voiceRecordings || [];
-    const updatedStory = {
-      ...story,
-      voiceRecordings: [...recordings, base64Audio]
-    };
-    
+    const updatedStory = { ...story, voiceRecordings: [...recordings, base64Audio] };
     return storage.saveStory(updatedStory);
-  }
+  },
+
+  deleteVoiceRecording: (storyId: string, index: number): Story | undefined => {
+    const story = storage.getStory(storyId);
+    if (!story) return undefined;
+    const recordings = [...(story.voiceRecordings || [])];
+    recordings.splice(index, 1);
+    const updatedStory = { ...story, voiceRecordings: recordings };
+    return storage.saveStory(updatedStory);
+  },
+
+  toggleFavorite: (storyId: string): Story | undefined => {
+    const story = storage.getStory(storyId);
+    if (!story) return undefined;
+    const updatedStory = { ...story, isFavorite: !story.isFavorite };
+    return storage.saveStory(updatedStory);
+  },
+
+  incrementReadCount: (storyId: string): void => {
+    const story = storage.getStory(storyId);
+    if (!story) return;
+    const updatedStory = { ...story, readCount: (story.readCount || 0) + 1 };
+    storage.saveStory(updatedStory);
+  },
+
+  resetToSeed: (): void => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_STORIES));
+  },
 };
 
 export const fileToBase64 = (file: File): Promise<string> => {
