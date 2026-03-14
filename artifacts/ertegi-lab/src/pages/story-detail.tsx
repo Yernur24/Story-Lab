@@ -6,7 +6,7 @@ import { Link } from "wouter";
 import { AudioRecorder } from "@/components/AudioRecorder";
 import { Slideshow } from "@/components/Slideshow";
 import { motion, AnimatePresence } from "framer-motion";
-import { loadVideoUrl } from "@/lib/videoDb";
+import { apiClient } from "@/lib/api-client";
 
 // ─── Pagination helper ────────────────────────────────────────────────────────
 function paginateContent(content: string, charsPerPage = 900): string[] {
@@ -51,11 +51,20 @@ export default function StoryDetail() {
     if (id) incrementReadCount.mutate(id);
   }, [id]);
 
-  // Load video from IndexedDB when story loads
+  // Load video from API when story loads
   useEffect(() => {
     if (story?.videoFile) {
-      loadVideoUrl(story.videoFile).then(url => {
-        if (url) setUploadedVideoUrl(url);
+      apiClient.getVideoBase64(story.videoFile).then(({ dataBase64 }) => {
+        // Convert base64 data URL to blob URL for the video element
+        const base64 = dataBase64.split(',')[1] ?? dataBase64;
+        const mimeType = dataBase64.startsWith('data:') ? dataBase64.split(';')[0].split(':')[1] : 'video/mp4';
+        const byteChars = atob(base64);
+        const byteArrays = new Uint8Array(byteChars.length);
+        for (let i = 0; i < byteChars.length; i++) byteArrays[i] = byteChars.charCodeAt(i);
+        const blob = new Blob([byteArrays], { type: mimeType });
+        setUploadedVideoUrl(URL.createObjectURL(blob));
+      }).catch(() => {
+        setUploadedVideoUrl(null);
       });
     }
   }, [story?.videoFile]);
@@ -388,9 +397,9 @@ export default function StoryDetail() {
                 )}
 
                 {/* Reload hint for file video */}
-                {story.videoFile && !uploadedVideoUrl && !isLoading && (
+                {story.videoFile && !uploadedVideoUrl && (
                   <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 text-amber-800 text-sm font-medium">
-                    ⚠️ Видео файл браузерде ғана сақталады. Беттіңізді жаңартсаңыз, видеоны қайта жүктеу қажет болуы мүмкін. Тұрақты сақтау үшін YouTube URL пайдаланыңыз.
+                    ⏳ Видео жүктелуде...
                   </div>
                 )}
               </div>

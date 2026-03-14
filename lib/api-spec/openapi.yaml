@@ -10,6 +10,10 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: stories
+    description: Story management
+  - name: videos
+    description: Video file management
 paths:
   /healthz:
     get:
@@ -24,6 +28,321 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /stories:
+    get:
+      operationId: getStories
+      tags: [stories]
+      summary: Get all stories
+      responses:
+        "200":
+          description: List of stories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Story"
+    post:
+      operationId: createStory
+      tags: [stories]
+      summary: Create a new story
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateStoryInput"
+      responses:
+        "201":
+          description: Created story
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Story"
+
+  /stories/reset:
+    post:
+      operationId: resetStories
+      tags: [stories]
+      summary: Reset stories to seed data
+      responses:
+        "200":
+          description: Reset successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                required:
+                  - success
+
+  /stories/{id}:
+    get:
+      operationId: getStory
+      tags: [stories]
+      summary: Get a story by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Story found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Story"
+        "404":
+          description: Story not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateStory
+      tags: [stories]
+      summary: Update a story
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStoryInput"
+      responses:
+        "200":
+          description: Updated story
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Story"
+        "404":
+          description: Story not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteStory
+      tags: [stories]
+      summary: Delete a story
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Story not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /stories/{id}/favorite:
+    post:
+      operationId: toggleFavorite
+      tags: [stories]
+      summary: Toggle favorite status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Updated story
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Story"
+        "404":
+          description: Story not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /stories/{id}/read:
+    post:
+      operationId: incrementReadCount
+      tags: [stories]
+      summary: Increment read count
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Updated story
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Story"
+        "404":
+          description: Story not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /stories/{id}/voice-recordings:
+    post:
+      operationId: addVoiceRecording
+      tags: [stories]
+      summary: Add a voice recording to a story
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                audioBase64:
+                  type: string
+              required:
+                - audioBase64
+      responses:
+        "200":
+          description: Updated story
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Story"
+        "404":
+          description: Story not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /stories/{id}/voice-recordings/{index}:
+    delete:
+      operationId: deleteVoiceRecording
+      tags: [stories]
+      summary: Delete a voice recording
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: index
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Updated story
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Story"
+        "404":
+          description: Story not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /videos:
+    post:
+      operationId: uploadVideo
+      tags: [videos]
+      summary: Upload a video file as base64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                key:
+                  type: string
+                dataBase64:
+                  type: string
+              required:
+                - key
+                - dataBase64
+      responses:
+        "200":
+          description: Uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  key:
+                    type: string
+                required:
+                  - key
+
+  /videos/{key}:
+    get:
+      operationId: getVideo
+      tags: [videos]
+      summary: Get a video file as base64
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Video data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dataBase64:
+                    type: string
+                required:
+                  - dataBase64
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteVideo
+      tags: [videos]
+      summary: Delete a video file
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +353,143 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    Story:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        category:
+          type: string
+          enum: [fairy-tale, comic, cartoon, custom]
+        description:
+          type: string
+        content:
+          type: string
+        coverEmoji:
+          type: string
+        videoUrl:
+          type: string
+          nullable: true
+        videoFile:
+          type: string
+          nullable: true
+        quizEnabled:
+          type: boolean
+        audioFile:
+          type: string
+          nullable: true
+        images:
+          type: array
+          items:
+            type: string
+        voiceRecordings:
+          type: array
+          items:
+            type: string
+        isFavorite:
+          type: boolean
+        readCount:
+          type: integer
+        createdAt:
+          type: integer
+      required:
+        - id
+        - title
+        - category
+        - description
+        - content
+        - coverEmoji
+        - isFavorite
+        - readCount
+        - createdAt
+        - images
+        - voiceRecordings
+        - quizEnabled
+
+    CreateStoryInput:
+      type: object
+      properties:
+        title:
+          type: string
+        category:
+          type: string
+          enum: [fairy-tale, comic, cartoon, custom]
+        description:
+          type: string
+        content:
+          type: string
+        coverEmoji:
+          type: string
+        videoUrl:
+          type: string
+          nullable: true
+        videoFile:
+          type: string
+          nullable: true
+        quizEnabled:
+          type: boolean
+        audioFile:
+          type: string
+          nullable: true
+        images:
+          type: array
+          items:
+            type: string
+        voiceRecordings:
+          type: array
+          items:
+            type: string
+      required:
+        - title
+        - category
+        - description
+        - content
+        - coverEmoji
+
+    UpdateStoryInput:
+      type: object
+      properties:
+        title:
+          type: string
+        category:
+          type: string
+          enum: [fairy-tale, comic, cartoon, custom]
+        description:
+          type: string
+        content:
+          type: string
+        coverEmoji:
+          type: string
+        videoUrl:
+          type: string
+          nullable: true
+        videoFile:
+          type: string
+          nullable: true
+        quizEnabled:
+          type: boolean
+        audioFile:
+          type: string
+          nullable: true
+        images:
+          type: array
+          items:
+            type: string
+        voiceRecordings:
+          type: array
+          items:
+            type: string
+        isFavorite:
+          type: boolean
+        readCount:
+          type: integer

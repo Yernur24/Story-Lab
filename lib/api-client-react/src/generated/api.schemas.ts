@@ -8,3 +8,105 @@
 export interface HealthStatus {
   status: string;
 }
+
+export interface ErrorResponse {
+  error: string;
+}
+
+export type StoryCategory = (typeof StoryCategory)[keyof typeof StoryCategory];
+
+export const StoryCategory = {
+  "fairy-tale": "fairy-tale",
+  comic: "comic",
+  cartoon: "cartoon",
+  custom: "custom",
+} as const;
+
+export interface Story {
+  id: string;
+  title: string;
+  category: StoryCategory;
+  description: string;
+  content: string;
+  coverEmoji: string;
+  videoUrl?: string | null;
+  videoFile?: string | null;
+  quizEnabled: boolean;
+  audioFile?: string | null;
+  images: string[];
+  voiceRecordings: string[];
+  isFavorite: boolean;
+  readCount: number;
+  createdAt: number;
+}
+
+export type CreateStoryInputCategory =
+  (typeof CreateStoryInputCategory)[keyof typeof CreateStoryInputCategory];
+
+export const CreateStoryInputCategory = {
+  "fairy-tale": "fairy-tale",
+  comic: "comic",
+  cartoon: "cartoon",
+  custom: "custom",
+} as const;
+
+export interface CreateStoryInput {
+  title: string;
+  category: CreateStoryInputCategory;
+  description: string;
+  content: string;
+  coverEmoji: string;
+  videoUrl?: string | null;
+  videoFile?: string | null;
+  quizEnabled?: boolean;
+  audioFile?: string | null;
+  images?: string[];
+  voiceRecordings?: string[];
+}
+
+export type UpdateStoryInputCategory =
+  (typeof UpdateStoryInputCategory)[keyof typeof UpdateStoryInputCategory];
+
+export const UpdateStoryInputCategory = {
+  "fairy-tale": "fairy-tale",
+  comic: "comic",
+  cartoon: "cartoon",
+  custom: "custom",
+} as const;
+
+export interface UpdateStoryInput {
+  title?: string;
+  category?: UpdateStoryInputCategory;
+  description?: string;
+  content?: string;
+  coverEmoji?: string;
+  videoUrl?: string | null;
+  videoFile?: string | null;
+  quizEnabled?: boolean;
+  audioFile?: string | null;
+  images?: string[];
+  voiceRecordings?: string[];
+  isFavorite?: boolean;
+  readCount?: number;
+}
+
+export type ResetStories200 = {
+  success: boolean;
+};
+
+export type AddVoiceRecordingBody = {
+  audioBase64: string;
+};
+
+export type UploadVideoBody = {
+  key: string;
+  dataBase64: string;
+};
+
+export type UploadVideo200 = {
+  key: string;
+};
+
+export type GetVideo200 = {
+  dataBase64: string;
+};

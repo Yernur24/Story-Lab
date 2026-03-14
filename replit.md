@@ -48,6 +48,17 @@ Every package extends `tsconfig.base.json` which sets `composite: true`. The roo
 - `pnpm run build` — runs `typecheck` first, then recursively runs `build` in all packages that define it
 - `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
 
+## Artifacts
+
+### `artifacts/ertegi-lab` (`@workspace/ertegi-lab`)
+
+React + Vite frontend for the Kazakh-language fairy tale interactive library (Ertegi Lab). All data is persisted via the API server and PostgreSQL database (no localStorage or IndexedDB).
+
+- **Key files**: `src/lib/api-client.ts` — typed API client; `src/hooks/use-stories.ts` — React Query hooks calling the API; `src/pages/` — Home, Library, StoryDetail, StoryForm, Quiz pages
+- **Story features**: CRUD, favorites, read count, voice recordings, video upload (base64 via API), image galleries, quizzes
+- **Data flow**: all reads/writes go through `apiClient` → `/api/*` → `api-server` → PostgreSQL
+- `pnpm --filter @workspace/ertegi-lab run dev` — run with Vite dev server (requires `PORT` and `BASE_PATH` env vars from artifact system)
+
 ## Packages
 
 ### `artifacts/api-server` (`@workspace/api-server`)

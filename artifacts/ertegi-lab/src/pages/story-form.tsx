@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useSaveStory, useStory } from "@/hooks/use-stories";
 import { fileToBase64, StoryCategory } from "@/lib/storage";
-import { saveVideoBlob, hasVideoBlob } from "@/lib/videoDb";
+import { apiClient } from "@/lib/api-client";
 import { ArrowLeft, Save, Image as ImageIcon, Music, Video, Sparkles, Link2, Upload } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -77,8 +77,10 @@ export default function StoryForm() {
       if (existingStory.videoFile) {
         setVideoFileKey(existingStory.videoFile);
         setVideoMode('file');
-        hasVideoBlob(existingStory.videoFile).then(exists => {
-          setExistingHasVideoFile(exists);
+        apiClient.getVideoBase64(existingStory.videoFile).then(() => {
+          setExistingHasVideoFile(true);
+        }).catch(() => {
+          setExistingHasVideoFile(false);
         });
       }
       setQuizEnabled(existingStory.quizEnabled !== false);
@@ -112,7 +114,8 @@ export default function StoryForm() {
     setIsUploading(true);
     try {
       const key = `video_${Date.now()}`;
-      await saveVideoBlob(key, file);
+      const dataBase64 = await fileToBase64(file);
+      await apiClient.uploadVideo(key, dataBase64);
       setVideoFileKey(key);
       setVideoFileName(file.name);
 

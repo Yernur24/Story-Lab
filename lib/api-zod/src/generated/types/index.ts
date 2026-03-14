@@ -6,4 +6,16 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./addVoiceRecordingBody";
+export * from "./createStoryInput";
+export * from "./createStoryInputCategory";
+export * from "./errorResponse";
+export * from "./getVideo200";
 export * from "./healthStatus";
+export * from "./resetStories200";
+export * from "./story";
+export * from "./storyCategory";
+export * from "./updateStoryInput";
+export * from "./updateStoryInputCategory";
+export * from "./uploadVideo200";
+export * from "./uploadVideoBody";

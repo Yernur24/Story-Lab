@@ -14,3 +14,257 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * @summary Get all stories
+ */
+export const GetStoriesResponseItem = zod.object({
+  id: zod.string(),
+  title: zod.string(),
+  category: zod.enum(["fairy-tale", "comic", "cartoon", "custom"]),
+  description: zod.string(),
+  content: zod.string(),
+  coverEmoji: zod.string(),
+  videoUrl: zod.string().nullish(),
+  videoFile: zod.string().nullish(),
+  quizEnabled: zod.boolean(),
+  audioFile: zod.string().nullish(),
+  images: zod.array(zod.string()),
+  voiceRecordings: zod.array(zod.string()),
+  isFavorite: zod.boolean(),
+  readCount: zod.number(),
+  createdAt: zod.number(),
+});
+export const GetStoriesResponse = zod.array(GetStoriesResponseItem);
+
+/**
+ * @summary Create a new story
+ */
+export const CreateStoryBody = zod.object({
+  title: zod.string(),
+  category: zod.enum(["fairy-tale", "comic", "cartoon", "custom"]),
+  description: zod.string(),
+  content: zod.string(),
+  coverEmoji: zod.string(),
+  videoUrl: zod.string().nullish(),
+  videoFile: zod.string().nullish(),
+  quizEnabled: zod.boolean().optional(),
+  audioFile: zod.string().nullish(),
+  images: zod.array(zod.string()).optional(),
+  voiceRecordings: zod.array(zod.string()).optional(),
+});
+
+/**
+ * @summary Reset stories to seed data
+ */
+export const ResetStoriesResponse = zod.object({
+  success: zod.boolean(),
+});
+
+/**
+ * @summary Get a story by ID
+ */
+export const GetStoryParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const GetStoryResponse = zod.object({
+  id: zod.string(),
+  title: zod.string(),
+  category: zod.enum(["fairy-tale", "comic", "cartoon", "custom"]),
+  description: zod.string(),
+  content: zod.string(),
+  coverEmoji: zod.string(),
+  videoUrl: zod.string().nullish(),
+  videoFile: zod.string().nullish(),
+  quizEnabled: zod.boolean(),
+  audioFile: zod.string().nullish(),
+  images: zod.array(zod.string()),
+  voiceRecordings: zod.array(zod.string()),
+  isFavorite: zod.boolean(),
+  readCount: zod.number(),
+  createdAt: zod.number(),
+});
+
+/**
+ * @summary Update a story
+ */
+export const UpdateStoryParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const UpdateStoryBody = zod.object({
+  title: zod.string().optional(),
+  category: zod.enum(["fairy-tale", "comic", "cartoon", "custom"]).optional(),
+  description: zod.string().optional(),
+  content: zod.string().optional(),
+  coverEmoji: zod.string().optional(),
+  videoUrl: zod.string().nullish(),
+  videoFile: zod.string().nullish(),
+  quizEnabled: zod.boolean().optional(),
+  audioFile: zod.string().nullish(),
+  images: zod.array(zod.string()).optional(),
+  voiceRecordings: zod.array(zod.string()).optional(),
+  isFavorite: zod.boolean().optional(),
+  readCount: zod.number().optional(),
+});
+
+export const UpdateStoryResponse = zod.object({
+  id: zod.string(),
+  title: zod.string(),
+  category: zod.enum(["fairy-tale", "comic", "cartoon", "custom"]),
+  description: zod.string(),
+  content: zod.string(),
+  coverEmoji: zod.string(),
+  videoUrl: zod.string().nullish(),
+  videoFile: zod.string().nullish(),
+  quizEnabled: zod.boolean(),
+  audioFile: zod.string().nullish(),
+  images: zod.array(zod.string()),
+  voiceRecordings: zod.array(zod.string()),
+  isFavorite: zod.boolean(),
+  readCount: zod.number(),
+  createdAt: zod.number(),
+});
+
+/**
+ * @summary Delete a story
+ */
+export const DeleteStoryParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+/**
+ * @summary Toggle favorite status
+ */
+export const ToggleFavoriteParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const ToggleFavoriteResponse = zod.object({
+  id: zod.string(),
+  title: zod.string(),
+  category: zod.enum(["fairy-tale", "comic", "cartoon", "custom"]),
+  description: zod.string(),
+  content: zod.string(),
+  coverEmoji: zod.string(),
+  videoUrl: zod.string().nullish(),
+  videoFile: zod.string().nullish(),
+  quizEnabled: zod.boolean(),
+  audioFile: zod.string().nullish(),
+  images: zod.array(zod.string()),
+  voiceRecordings: zod.array(zod.string()),
+  isFavorite: zod.boolean(),
+  readCount: zod.number(),
+  createdAt: zod.number(),
+});
+
+/**
+ * @summary Increment read count
+ */
+export const IncrementReadCountParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const IncrementReadCountResponse = zod.object({
+  id: zod.string(),
+  title: zod.string(),
+  category: zod.enum(["fairy-tale", "comic", "cartoon", "custom"]),
+  description: zod.string(),
+  content: zod.string(),
+  coverEmoji: zod.string(),
+  videoUrl: zod.string().nullish(),
+  videoFile: zod.string().nullish(),
+  quizEnabled: zod.boolean(),
+  audioFile: zod.string().nullish(),
+  images: zod.array(zod.string()),
+  voiceRecordings: zod.array(zod.string()),
+  isFavorite: zod.boolean(),
+  readCount: zod.number(),
+  createdAt: zod.number(),
+});
+
+/**
+ * @summary Add a voice recording to a story
+ */
+export const AddVoiceRecordingParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const AddVoiceRecordingBody = zod.object({
+  audioBase64: zod.string(),
+});
+
+export const AddVoiceRecordingResponse = zod.object({
+  id: zod.string(),
+  title: zod.string(),
+  category: zod.enum(["fairy-tale", "comic", "cartoon", "custom"]),
+  description: zod.string(),
+  content: zod.string(),
+  coverEmoji: zod.string(),
+  videoUrl: zod.string().nullish(),
+  videoFile: zod.string().nullish(),
+  quizEnabled: zod.boolean(),
+  audioFile: zod.string().nullish(),
+  images: zod.array(zod.string()),
+  voiceRecordings: zod.array(zod.string()),
+  isFavorite: zod.boolean(),
+  readCount: zod.number(),
+  createdAt: zod.number(),
+});
+
+/**
+ * @summary Delete a voice recording
+ */
+export const DeleteVoiceRecordingParams = zod.object({
+  id: zod.coerce.string(),
+  index: zod.coerce.number(),
+});
+
+export const DeleteVoiceRecordingResponse = zod.object({
+  id: zod.string(),
+  title: zod.string(),
+  category: zod.enum(["fairy-tale", "comic", "cartoon", "custom"]),
+  description: zod.string(),
+  content: zod.string(),
+  coverEmoji: zod.string(),
+  videoUrl: zod.string().nullish(),
+  videoFile: zod.string().nullish(),
+  quizEnabled: zod.boolean(),
+  audioFile: zod.string().nullish(),
+  images: zod.array(zod.string()),
+  voiceRecordings: zod.array(zod.string()),
+  isFavorite: zod.boolean(),
+  readCount: zod.number(),
+  createdAt: zod.number(),
+});
+
+/**
+ * @summary Upload a video file as base64
+ */
+export const UploadVideoBody = zod.object({
+  key: zod.string(),
+  dataBase64: zod.string(),
+});
+
+export const UploadVideoResponse = zod.object({
+  key: zod.string(),
+});
+
+/**
+ * @summary Get a video file as base64
+ */
+export const GetVideoParams = zod.object({
+  key: zod.coerce.string(),
+});
+
+export const GetVideoResponse = zod.object({
+  dataBase64: zod.string(),
+});
+
+/**
+ * @summary Delete a video file
+ */
+export const DeleteVideoParams = zod.object({
+  key: zod.coerce.string(),
+});
