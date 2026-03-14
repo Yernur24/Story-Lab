@@ -10,6 +10,7 @@ export interface Story {
   content: string;
   coverEmoji: string;
   videoUrl?: string;
+  videoFile?: string; // IndexedDB key for uploaded video blob
   audioFile?: string;
   images?: string[];
   voiceRecordings?: string[];
