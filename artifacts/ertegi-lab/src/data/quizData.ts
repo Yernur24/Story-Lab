@@ -249,6 +249,117 @@ export function getQuizForStory(title: string): QuizQuestion[] {
   return QUIZ_BY_TITLE[title] || [];
 }
 
+export interface StoryInfo {
+  title: string;
+  description: string;
+  content: string;
+  coverEmoji: string;
+  category: string;
+}
+
+const CATEGORY_LABELS: Record<string, string> = {
+  'fairy-tale': 'Ертегі',
+  'comic': 'Комикс',
+  'cartoon': 'Мультфильм',
+  'custom': 'Басқа',
+};
+
+const ALL_CATEGORIES = ['Ертегі', 'Комикс', 'Мультфильм', 'Басқа'];
+
+function pickDistractors<T>(correct: T, pool: T[], count: number): T[] {
+  const filtered = pool.filter(x => x !== correct);
+  const shuffled = filtered.sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count);
+}
+
+export function generateAutoQuiz(
+  story: StoryInfo,
+  allStories: { title: string; coverEmoji: string; id: string }[]
+): QuizQuestion[] {
+  const questions: QuizQuestion[] = [];
+
+  const otherTitles = allStories.filter(s => s.title !== story.title).map(s => s.title);
+  const titleDistractors = pickDistractors(story.title, otherTitles, 3);
+  if (titleDistractors.length >= 3) {
+    const opts = [story.title, ...titleDistractors].sort(() => Math.random() - 0.5);
+    questions.push({
+      type: 'multiple-choice',
+      question: `Бұл ертегінің аты қандай?`,
+      options: opts,
+      correctIndex: opts.indexOf(story.title),
+    });
+  }
+
+  const correctCat = CATEGORY_LABELS[story.category] ?? 'Ертегі';
+  const catDistractors = pickDistractors(correctCat, ALL_CATEGORIES, 3);
+  const catOpts = [correctCat, ...catDistractors].sort(() => Math.random() - 0.5);
+  questions.push({
+    type: 'multiple-choice',
+    question: `«${story.title}» қай санатқа жатады?`,
+    options: catOpts,
+    correctIndex: catOpts.indexOf(correctCat),
+  });
+
+  const shortDesc = story.description.length > 70
+    ? story.description.slice(0, 70) + '...'
+    : story.description;
+  const descDistractors = [
+    'Ғарышкерлер туралы шытырман оқиға',
+    'Теңіздегі балықтар туралы мультфильм',
+    'Роботтар мен адамдар туралы ертегі',
+  ].filter(d => d !== shortDesc);
+  const descOpts = [shortDesc, ...descDistractors].sort(() => Math.random() - 0.5);
+  questions.push({
+    type: 'character-match',
+    question: `«${story.title}» ертегісі не туралы?`,
+    options: descOpts,
+    correctIndex: descOpts.indexOf(shortDesc),
+    hint: `${story.coverEmoji} белгісіне қара`,
+  });
+
+  const otherEmojis = allStories.filter(s => s.title !== story.title).map(s => s.coverEmoji);
+  const emojiDistractors = pickDistractors(story.coverEmoji, otherEmojis, 3);
+  if (emojiDistractors.length >= 3) {
+    const emojiOpts = [story.coverEmoji, ...emojiDistractors].sort(() => Math.random() - 0.5);
+    questions.push({
+      type: 'multiple-choice',
+      question: `«${story.title}» ертегісінің белгісі (эмоджисі) қандай?`,
+      options: emojiOpts,
+      correctIndex: emojiOpts.indexOf(story.coverEmoji),
+    });
+  }
+
+  const paragraphs = story.content.split('\n').map(p => p.trim()).filter(p => p.length > 20);
+  const snippet = paragraphs.length > 0
+    ? paragraphs[0].slice(0, 160) + (paragraphs[0].length > 160 ? '...' : '')
+    : story.content.slice(0, 160) + '...';
+  questions.push({
+    type: 'continue-story',
+    snippet,
+    question: 'Одан кейін не болды деп ойлайсың? Ертегіні жалғастыр!',
+  });
+
+  if (paragraphs.length > 1) {
+    const midSnippet = paragraphs[Math.floor(paragraphs.length / 2)].slice(0, 120);
+    const lessonOptions = [
+      'Достықтың маңызды екенін',
+      'Батылдық пен мейірімділіктің күшін',
+      'Ашкөздіктің жаман екенін',
+      'Адалдық пен шыдамның жемісін',
+    ];
+    const lessonShuffled = lessonOptions.sort(() => Math.random() - 0.5);
+    questions.push({
+      type: 'multiple-choice',
+      question: `«${story.title}» ертегісі бізге не үйретеді?`,
+      options: lessonShuffled,
+      correctIndex: Math.floor(Math.random() * lessonShuffled.length),
+      hint: midSnippet || undefined,
+    });
+  }
+
+  return questions;
+}
+
 export function generateImageMatchQuestions(allStories: { title: string; coverEmoji: string; id: string }[]): QuizQuestion[] {
   if (allStories.length < 3) return [];
 

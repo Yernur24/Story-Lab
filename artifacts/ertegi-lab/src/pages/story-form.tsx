@@ -50,6 +50,7 @@ export default function StoryForm() {
   const [videoFileName, setVideoFileName] = useState<string | undefined>();
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | undefined>();
   const [existingHasVideoFile, setExistingHasVideoFile] = useState(false);
+  const [videoUploadProgress, setVideoUploadProgress] = useState<number | null>(null);
   const [quizEnabled, setQuizEnabled] = useState(true);
 
   const form = useForm<FormValues>({
@@ -119,26 +120,61 @@ export default function StoryForm() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const maxSize = 200 * 1024 * 1024;
+    const maxSize = 600 * 1024 * 1024;
     if (file.size > maxSize) {
-      toast({ title: "Ескерту", description: "Видео файл тым үлкен (макс. 200 МБ). YouTube URL пайдаланыңыз.", variant: "destructive" });
+      toast({ title: "Ескерту", description: "Видео файл тым үлкен (макс. 600 МБ). YouTube URL пайдаланыңыз.", variant: "destructive" });
       return;
     }
 
     setIsUploading(true);
+    setVideoUploadProgress(0);
+
     try {
       const key = `video_${Date.now()}`;
-      const dataBase64 = await fileToBase64(file);
-      await apiClient.uploadVideo(key, dataBase64);
+
+      const dataBase64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onprogress = (ev) => {
+          if (ev.lengthComputable) {
+            setVideoUploadProgress(Math.round((ev.loaded / ev.total) * 45));
+          }
+        };
+        reader.onload = () => resolve((reader.result as string).split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      setVideoUploadProgress(50);
+
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/videos');
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.upload.onprogress = (ev) => {
+          if (ev.lengthComputable) {
+            setVideoUploadProgress(50 + Math.round((ev.loaded / ev.total) * 50));
+          }
+        };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) resolve();
+          else reject(new Error(xhr.statusText));
+        };
+        xhr.onerror = reject;
+        xhr.send(JSON.stringify({ key, dataBase64 }));
+      });
+
       setVideoFileKey(key);
       setVideoFileName(file.name);
       const previewUrl = URL.createObjectURL(file);
       setVideoPreviewUrl(previewUrl);
+      setVideoUploadProgress(100);
       toast({ title: "✓ Видео жүктелді!", description: `${file.name} (${(file.size / 1024 / 1024).toFixed(1)} МБ)` });
     } catch {
       toast({ title: "Қате", description: "Видео жүктелмеді", variant: "destructive" });
+      setVideoUploadProgress(null);
     }
     setIsUploading(false);
+    setTimeout(() => setVideoUploadProgress(null), 1500);
   };
 
   const handleImagesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -352,8 +388,35 @@ export default function StoryForm() {
                       />
                     </label>
                     <p className="text-xs text-muted-foreground font-medium">
-                      Максималды өлшем: 200 МБ.
+                      Максималды өлшем: 600 МБ.
                     </p>
+
+                    {videoUploadProgress !== null && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="space-y-1.5"
+                      >
+                        <div className="flex justify-between text-xs font-bold text-secondary">
+                          <span>
+                            {videoUploadProgress < 50
+                              ? '📂 Файл оқылуда...'
+                              : videoUploadProgress < 100
+                              ? '☁️ Серверге жіберілуде...'
+                              : '✅ Жүктелді!'}
+                          </span>
+                          <span>{videoUploadProgress}%</span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-3 overflow-hidden border border-border">
+                          <motion.div
+                            className="h-full rounded-full bg-gradient-to-r from-secondary to-primary"
+                            initial={{ width: 0 }}
+                            animate={{ width: `${videoUploadProgress}%` }}
+                            transition={{ duration: 0.3, ease: 'easeOut' }}
+                          />
+                        </div>
+                      </motion.div>
+                    )}
 
                     {videoPreviewUrl && (
                       <motion.div

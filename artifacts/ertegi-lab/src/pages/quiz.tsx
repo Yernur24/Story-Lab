@@ -3,7 +3,7 @@ import { useRoute, Link } from "wouter";
 import { useStory, useStories } from "@/hooks/use-stories";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Trophy, RotateCcw, ChevronRight, Lightbulb, CheckCircle2, XCircle, Pencil } from "lucide-react";
-import { getQuizForStory, generateImageMatchQuestions, QuizQuestion, QuizType } from "@/data/quizData";
+import { getQuizForStory, generateAutoQuiz, generateImageMatchQuestions, QuizQuestion, QuizType } from "@/data/quizData";
 
 const GAME_TYPE_LABELS: Record<QuizType, string> = {
   'multiple-choice': '🎯 Дұрыс жауапты таңда',
@@ -42,9 +42,28 @@ export default function QuizPage() {
   const [streak, setStreak] = useState(0);
   const [bestStreak, setBestStreak] = useState(0);
 
-  const storyQuestions = story ? getQuizForStory(story.title) : [];
+  const allStoriesSimple = allStories
+    ? allStories.map(s => ({ id: s.id, title: s.title, coverEmoji: s.coverEmoji }))
+    : [];
+
+  const manualQuestions = story ? getQuizForStory(story.title) : [];
+  const storyQuestions = manualQuestions.length > 0
+    ? manualQuestions
+    : story
+    ? generateAutoQuiz(
+        {
+          title: story.title,
+          description: story.description,
+          content: story.content,
+          coverEmoji: story.coverEmoji,
+          category: story.category,
+        },
+        allStoriesSimple
+      )
+    : [];
+
   const imageMatchQuestions = allStories
-    ? generateImageMatchQuestions(allStories.map(s => ({ id: s.id, title: s.title, coverEmoji: s.coverEmoji })))
+    ? generateImageMatchQuestions(allStoriesSimple)
     : [];
 
   const getQuestionsForType = (type: QuizType): QuizQuestion[] => {
