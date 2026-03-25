@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRoute } from "wouter";
-import { useStory, useAddVoiceRecording, useDeleteVoiceRecording, useToggleFavorite, useIncrementReadCount, useSaveStory } from "@/hooks/use-stories";
-import { ArrowLeft, Edit, Headphones, PlayCircle, Image as ImageIcon, BookOpen, Heart, Share2, Trash2, Check, ChevronLeft, ChevronRight, Gamepad2, Mic, Play, Pause } from "lucide-react";
+import { useStory, useAddVoiceRecording, useDeleteVoiceRecording, useToggleFavorite, useIncrementReadCount, useSaveStory, useRateStory } from "@/hooks/use-stories";
+import { ArrowLeft, Edit, Headphones, PlayCircle, Image as ImageIcon, BookOpen, Heart, Share2, Trash2, Check, ChevronLeft, ChevronRight, Gamepad2, Mic, Play, Pause, Star } from "lucide-react";
+import { trackRead } from "@/lib/stats";
 import { Link } from "wouter";
 import { AudioRecorder } from "@/components/AudioRecorder";
 import { Slideshow } from "@/components/Slideshow";
@@ -120,18 +121,35 @@ export default function StoryDetail() {
   const toggleFavorite = useToggleFavorite();
   const incrementReadCount = useIncrementReadCount();
   const saveStory = useSaveStory();
+  const rateStory = useRateStory();
 
   const [activeTab, setActiveTab] = useState<'read' | 'listen' | 'watch' | 'record'>('read');
   const [copied, setCopied] = useState(false);
   const [deletingIndex, setDeletingIndex] = useState<number | null>(null);
+  const [userRating, setUserRating] = useState<number>(0);
+  const [hoverRating, setHoverRating] = useState<number>(0);
+  const [ratingDone, setRatingDone] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(0);
   const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string | null>(null);
   const [videoLoadState, setVideoLoadState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
 
   useEffect(() => {
-    if (id) incrementReadCount.mutate(id);
+    if (id) {
+      incrementReadCount.mutate(id);
+    }
   }, [id]);
+
+  useEffect(() => {
+    if (story) {
+      trackRead({ id: story.id, title: story.title, coverEmoji: story.coverEmoji });
+      const savedRating = localStorage.getItem(`ertegi_rating_${story.id}`);
+      if (savedRating) {
+        setUserRating(parseInt(savedRating, 10));
+        setRatingDone(true);
+      }
+    }
+  }, [story?.id]);
 
   useEffect(() => {
     setUploadedVideoUrl(null);
@@ -193,6 +211,14 @@ export default function StoryDetail() {
     if (!confirm('Бұл жазбаны өшіруге сенімдісіз бе?')) return;
     setDeletingIndex(index);
     deleteVoiceRecording.mutate({ id, index }, { onSettled: () => setDeletingIndex(null) });
+  };
+
+  const handleRate = (rating: number) => {
+    if (ratingDone || !story) return;
+    setUserRating(rating);
+    setRatingDone(true);
+    localStorage.setItem(`ertegi_rating_${story.id}`, String(rating));
+    rateStory.mutate({ id: story.id, rating });
   };
 
   const handleShare = () => {
@@ -268,7 +294,49 @@ export default function StoryDetail() {
                 {showPagination ? <span className="px-3 py-1 bg-muted text-muted-foreground font-bold text-sm rounded-full border-2 border-border">📄 {totalPages} бет</span> : null}
               </div>
               <h1 className="text-4xl md:text-5xl font-display font-extrabold text-foreground mb-4 leading-tight">{story.title}</h1>
-              <p className="text-lg text-muted-foreground font-medium mb-6">{story.description}</p>
+              <p className="text-lg text-muted-foreground font-medium mb-4">{story.description}</p>
+
+              {/* Star Rating */}
+              <div className="flex items-center gap-3 justify-center md:justify-start mb-5">
+                <div className="flex items-center gap-0.5">
+                  {[1,2,3,4,5].map(star => (
+                    <button
+                      key={star}
+                      type="button"
+                      disabled={ratingDone}
+                      onClick={() => handleRate(star)}
+                      onMouseEnter={() => !ratingDone && setHoverRating(star)}
+                      onMouseLeave={() => setHoverRating(0)}
+                      className="transition-transform hover:scale-110 active:scale-95 disabled:cursor-default p-0.5"
+                    >
+                      <Star
+                        className={`w-7 h-7 transition-colors ${
+                          star <= (hoverRating || userRating)
+                            ? 'text-amber-400 fill-amber-400'
+                            : 'text-muted-foreground/40'
+                        }`}
+                      />
+                    </button>
+                  ))}
+                </div>
+                {story.ratingCount > 0 && (
+                  <span className="text-sm font-bold text-muted-foreground">
+                    {story.rating.toFixed(1)} ({story.ratingCount})
+                  </span>
+                )}
+                {ratingDone && (
+                  <motion.span
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-full border border-amber-200"
+                  >
+                    ✓ Бағалады
+                  </motion.span>
+                )}
+                {!ratingDone && (
+                  <span className="text-xs text-muted-foreground font-medium">Бағала ⬆</span>
+                )}
+              </div>
 
               {/* Quick listen button if dubbing exists */}
               {hasDubbing && (

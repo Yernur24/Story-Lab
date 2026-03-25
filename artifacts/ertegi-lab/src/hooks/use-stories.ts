@@ -101,3 +101,17 @@ export function useIncrementReadCount() {
     },
   });
 }
+
+export function useRateStory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, rating }: { id: string; rating: number }) =>
+      apiClient.rateStory(id, rating),
+    onSuccess: (savedStory) => {
+      if (savedStory) {
+        queryClient.invalidateQueries({ queryKey: KEYS.all });
+        queryClient.invalidateQueries({ queryKey: KEYS.detail(savedStory.id) });
+      }
+    },
+  });
+}

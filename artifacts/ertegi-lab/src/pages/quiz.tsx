@@ -4,6 +4,7 @@ import { useStory, useStories } from "@/hooks/use-stories";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Trophy, RotateCcw, ChevronRight, Lightbulb, CheckCircle2, XCircle, Pencil } from "lucide-react";
 import { getQuizForStory, generateAutoQuiz, generateImageMatchQuestions, QuizQuestion, QuizType } from "@/data/quizData";
+import { trackQuiz } from "@/lib/stats";
 
 const GAME_TYPE_LABELS: Record<QuizType, string> = {
   'multiple-choice': '🎯 Дұрыс жауапты таңда',
@@ -107,6 +108,14 @@ export default function QuizPage() {
 
   const handleNext = () => {
     if (currentQ + 1 >= questions.length) {
+      if (story) {
+        trackQuiz(
+          { id: story.id, title: story.title, coverEmoji: story.coverEmoji },
+          score,
+          questions.length,
+          activeType
+        );
+      }
       setGameState('result');
     } else {
       setCurrentQ(c => c + 1);

@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Sparkles, BookOpen, PlusCircle, Home } from "lucide-react";
+import { Sparkles, BookOpen, PlusCircle, Home, BarChart3 } from "lucide-react";
 import { motion } from "framer-motion";
 
 export function Navigation() {
@@ -9,6 +9,7 @@ export function Navigation() {
     { path: "/", label: "Басты бет", icon: Home, color: "text-primary" },
     { path: "/library", label: "Кітапхана", icon: BookOpen, color: "text-secondary" },
     { path: "/add", label: "Қосу", icon: PlusCircle, color: "text-accent-foreground" },
+    { path: "/stats", label: "Статистика", icon: BarChart3, color: "text-green-600" },
   ];
 
   return (

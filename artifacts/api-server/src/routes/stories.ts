@@ -109,6 +109,8 @@ function mapStory(row: typeof storiesTable.$inferSelect) {
     voiceRecordings: (row.voiceRecordings as string[]) ?? [],
     isFavorite: row.isFavorite,
     readCount: row.readCount,
+    rating: row.rating ?? 0,
+    ratingCount: row.ratingCount ?? 0,
     createdAt: Number(row.createdAt),
   };
 }
@@ -234,6 +236,28 @@ router.post("/stories/:id/read", async (req, res) => {
     const rows = await db.select().from(storiesTable).where(eq(storiesTable.id, req.params.id));
     if (!rows[0]) return res.status(404).json({ error: "Ертегі табылмады" });
     await db.update(storiesTable).set({ readCount: rows[0].readCount + 1 }).where(eq(storiesTable.id, req.params.id));
+    const updated = await db.select().from(storiesTable).where(eq(storiesTable.id, req.params.id));
+    return res.json(mapStory(updated[0]));
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/stories/:id/rate", async (req, res) => {
+  try {
+    const { rating } = req.body;
+    if (typeof rating !== 'number' || rating < 1 || rating > 5) {
+      return res.status(400).json({ error: "Рейтинг 1-5 аралығында болуы керек" });
+    }
+    const rows = await db.select().from(storiesTable).where(eq(storiesTable.id, req.params.id));
+    if (!rows[0]) return res.status(404).json({ error: "Ертегі табылмады" });
+    const prev = rows[0];
+    const newCount = (prev.ratingCount ?? 0) + 1;
+    const newRating = ((prev.rating ?? 0) * (prev.ratingCount ?? 0) + rating) / newCount;
+    await db.update(storiesTable)
+      .set({ rating: newRating, ratingCount: newCount })
+      .where(eq(storiesTable.id, req.params.id));
     const updated = await db.select().from(storiesTable).where(eq(storiesTable.id, req.params.id));
     return res.json(mapStory(updated[0]));
   } catch (err) {

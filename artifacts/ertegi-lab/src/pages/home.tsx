@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Sparkles, ArrowRight, Play, BookOpen, PlusCircle } from "lucide-react";
+import { Sparkles, ArrowRight, BookOpen, PlusCircle, Star, Trophy } from "lucide-react";
 import { motion } from "framer-motion";
 import { useStories } from "@/hooks/use-stories";
 
@@ -7,6 +7,9 @@ export default function Home() {
   const { data: stories, isLoading } = useStories();
   
   const featuredStories = stories?.slice(0, 3) || [];
+  const storyOfTheDay = stories && stories.length > 0
+    ? [...stories].sort((a, b) => b.readCount - a.readCount)[0]
+    : null;
 
   return (
     <div className="min-h-screen pb-20">
@@ -71,6 +74,51 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Story of the Day */}
+      {storyOfTheDay && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <Link href={`/story/${storyOfTheDay.id}`} className="block group">
+              <div className="relative overflow-hidden bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400 rounded-3xl p-6 md:p-8 shadow-xl border-4 border-amber-300">
+                <div className="absolute inset-0 opacity-10">
+                  <div className="absolute -top-8 -right-8 w-48 h-48 bg-white rounded-full" />
+                  <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-white rounded-full" />
+                </div>
+                <div className="relative flex flex-col md:flex-row items-center md:items-start gap-6">
+                  <div className="w-24 h-24 md:w-28 md:h-28 bg-white/30 backdrop-blur-sm rounded-3xl flex items-center justify-center text-6xl flex-shrink-0 shadow-inner group-hover:scale-110 group-hover:rotate-6 transition-transform">
+                    {storyOfTheDay.coverEmoji}
+                  </div>
+                  <div className="text-white text-center md:text-left flex-1">
+                    <div className="flex items-center gap-2 justify-center md:justify-start mb-2">
+                      <Trophy className="w-4 h-4" />
+                      <span className="font-bold text-sm text-white/90 uppercase tracking-wide">⭐ Күннің ертегісі</span>
+                    </div>
+                    <h3 className="text-2xl md:text-3xl font-display font-extrabold mb-2">{storyOfTheDay.title}</h3>
+                    <p className="text-white/80 font-medium text-sm md:text-base line-clamp-2 mb-3">{storyOfTheDay.description}</p>
+                    <div className="flex items-center gap-3 flex-wrap justify-center md:justify-start">
+                      <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-bold">👁 {storyOfTheDay.readCount} рет</span>
+                      {storyOfTheDay.rating > 0 && (
+                        <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1">
+                          <Star className="w-3.5 h-3.5 fill-white" />
+                          {storyOfTheDay.rating.toFixed(1)}
+                        </span>
+                      )}
+                      <span className="bg-white text-amber-600 px-4 py-1.5 rounded-full text-sm font-extrabold group-hover:scale-105 transition-transform shadow-sm">
+                        Оқу → 
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          </motion.div>
+        </section>
+      )}
 
       {/* Featured Stories */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12">

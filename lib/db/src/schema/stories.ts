@@ -1,4 +1,4 @@
-import { pgTable, text, boolean, integer, bigint, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, boolean, integer, bigint, jsonb, real } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -17,6 +17,8 @@ export const storiesTable = pgTable("stories", {
   voiceRecordings: jsonb("voice_recordings").notNull().default([]).$type<string[]>(),
   isFavorite: boolean("is_favorite").notNull().default(false),
   readCount: integer("read_count").notNull().default(0),
+  rating: real("rating").notNull().default(0),
+  ratingCount: integer("rating_count").notNull().default(0),
   createdAt: bigint("created_at", { mode: "number" }).notNull(),
 });
 

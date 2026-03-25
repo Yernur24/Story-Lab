@@ -8,6 +8,7 @@ import Library from "@/pages/library";
 import StoryDetail from "@/pages/story-detail";
 import StoryForm from "@/pages/story-form";
 import QuizPage from "@/pages/quiz";
+import StatsPage from "@/pages/stats";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -28,6 +29,7 @@ function Router() {
       <Route path="/add" component={StoryForm} />
       <Route path="/edit/:id" component={StoryForm} />
       <Route path="/quiz/:id" component={QuizPage} />
+      <Route path="/stats" component={StatsPage} />
       <Route component={NotFound} />
     </Switch>
   );

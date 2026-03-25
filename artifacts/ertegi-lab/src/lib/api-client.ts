@@ -15,6 +15,8 @@ export interface Story {
   voiceRecordings: string[];
   isFavorite: boolean;
   readCount: number;
+  rating: number;
+  ratingCount: number;
   createdAt: number;
 }
 
@@ -61,6 +63,9 @@ export const apiClient = {
 
   deleteVoiceRecording: (id: string, index: number) =>
     fetchJSON<Story>(`/stories/${id}/voice-recordings/${index}`, { method: 'DELETE' }),
+
+  rateStory: (id: string, rating: number) =>
+    fetchJSON<Story>(`/stories/${id}/rate`, { method: 'POST', body: JSON.stringify({ rating }) }),
 
   resetStories: () =>
     fetchJSON<{ success: boolean }>('/stories/reset', { method: 'POST' }),
