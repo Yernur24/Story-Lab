@@ -10,8 +10,35 @@ import { motion, AnimatePresence } from "framer-motion";
 import { apiClient } from "@/lib/api-client";
 
 // ─── Pagination helper ────────────────────────────────────────────────────────
+function splitLongLine(line: string, charsPerPage: number): string[] {
+  if (line.length <= charsPerPage) return [line];
+  const chunks: string[] = [];
+  const words = line.split(' ');
+  let current = '';
+  for (const word of words) {
+    const candidate = current ? `${current} ${word}` : word;
+    if (candidate.length > charsPerPage && current.length > 0) {
+      chunks.push(current);
+      current = word;
+    } else {
+      current = candidate;
+    }
+  }
+  if (current) chunks.push(current);
+  return chunks.length > 0 ? chunks : [line];
+}
+
 function paginateContent(content: string, charsPerPage = 900): string[] {
-  const lines = content.split('\n');
+  const rawLines = content.split('\n');
+  const lines: string[] = [];
+  for (const line of rawLines) {
+    if (line.length > charsPerPage) {
+      lines.push(...splitLongLine(line, charsPerPage));
+    } else {
+      lines.push(line);
+    }
+  }
+
   const pages: string[] = [];
   let current = '';
 
