@@ -470,11 +470,11 @@ export default function StoryDetail() {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -30 }}
                     transition={{ duration: 0.2 }}
-                    className="prose prose-lg md:prose-xl max-w-none font-sans text-foreground leading-relaxed min-h-[200px]"
+                    className="prose prose-xl md:prose-2xl max-w-none font-sans text-foreground leading-relaxed min-h-[200px]"
                   >
                     {pages[currentPage]?.split('\n').map((line, i) =>
                       line.trim()
-                        ? <p key={i} className="mb-5">{line}</p>
+                        ? <p key={i} className="mb-5 text-xl md:text-2xl leading-loose">{line}</p>
                         : <br key={i} />
                     )}
                   </motion.div>
