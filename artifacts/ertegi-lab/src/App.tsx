@@ -8,6 +8,7 @@ import Library from "@/pages/library";
 import StoryDetail from "@/pages/story-detail";
 import StoryForm from "@/pages/story-form";
 import QuizPage from "@/pages/quiz";
+import QuizEditor from "@/pages/quiz-editor";
 import StatsPage from "@/pages/stats";
 import NotFound from "@/pages/not-found";
 
@@ -29,6 +30,7 @@ function Router() {
       <Route path="/add" component={StoryForm} />
       <Route path="/edit/:id" component={StoryForm} />
       <Route path="/quiz/:id" component={QuizPage} />
+      <Route path="/quiz-editor/:id" component={QuizEditor} />
       <Route path="/stats" component={StatsPage} />
       <Route component={NotFound} />
     </Switch>

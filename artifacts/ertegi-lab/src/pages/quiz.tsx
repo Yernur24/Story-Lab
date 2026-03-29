@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { useRoute, Link } from "wouter";
 import { useStory, useStories } from "@/hooks/use-stories";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Trophy, RotateCcw, ChevronRight, Lightbulb, CheckCircle2, XCircle, Pencil } from "lucide-react";
+import { ArrowLeft, Trophy, RotateCcw, ChevronRight, Lightbulb, CheckCircle2, XCircle, Pencil, Settings2 } from "lucide-react";
 import { getQuizForStory, generateAutoQuiz, generateImageMatchQuestions, QuizQuestion, QuizType } from "@/data/quizData";
 import { trackQuiz } from "@/lib/stats";
+import { loadCustomQuiz } from "./quiz-editor";
 
 const GAME_TYPE_LABELS: Record<QuizType, string> = {
   'multiple-choice': '🎯 Дұрыс жауапты таңда',
@@ -47,6 +48,17 @@ export default function QuizPage() {
     ? allStories.map(s => ({ id: s.id, title: s.title, coverEmoji: s.coverEmoji }))
     : [];
 
+  const customQuestions: QuizQuestion[] = id
+    ? loadCustomQuiz(id).map(q => ({
+        type: q.type as QuizType,
+        question: q.question,
+        options: q.options,
+        correctIndex: q.correctIndex,
+        hint: q.hint || undefined,
+        snippet: q.snippet || undefined,
+      }))
+    : [];
+
   const manualQuestions = story ? getQuizForStory(story.title) : [];
   const storyQuestions = manualQuestions.length > 0
     ? manualQuestions
@@ -69,8 +81,12 @@ export default function QuizPage() {
 
   const getQuestionsForType = (type: QuizType): QuizQuestion[] => {
     if (type === 'image-match') return imageMatchQuestions;
+    const custom = customQuestions.filter(q => q.type === type);
+    if (custom.length > 0) return custom;
     return storyQuestions.filter(q => q.type === type);
   };
+
+  const hasCustomQuestions = customQuestions.length > 0;
 
   const startGame = (type: QuizType) => {
     const qs = getQuestionsForType(type);
@@ -222,9 +238,14 @@ export default function QuizPage() {
             </motion.div>
             <h1 className="text-4xl font-display font-extrabold mb-2">{story.title}</h1>
             <p className="text-muted-foreground font-bold text-lg">Ойын тапсырмаларын таңда!</p>
+            {hasCustomQuestions && (
+              <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary text-sm font-bold rounded-full border-2 border-primary/20">
+                ✅ Өз сұрақтарыңыз белсенді ({customQuestions.length} сұрақ)
+              </div>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             {gameTypes.map(({ type, emoji, desc }) => {
               const qs = getQuestionsForType(type);
               const available = qs.length > 0;
@@ -259,6 +280,13 @@ export default function QuizPage() {
               );
             })}
           </div>
+
+          <Link
+            href={`/quiz-editor/${id}`}
+            className="flex items-center justify-center gap-2 w-full py-3 bg-white border-2 border-dashed border-border text-muted-foreground font-bold rounded-2xl hover:border-primary hover:text-primary transition-all"
+          >
+            <Settings2 className="w-4 h-4" /> ✏️ Өз сұрақтарымды жасау
+          </Link>
         </div>
       </div>
     );

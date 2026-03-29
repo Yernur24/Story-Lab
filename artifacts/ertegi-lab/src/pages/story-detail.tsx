@@ -393,6 +393,13 @@ export default function StoryDetail() {
                     <Gamepad2 className="w-4 h-4" /> 🎮 Ойын өшірулі
                   </span>
                 )}
+                <Link
+                  href={`/quiz-editor/${story.id}`}
+                  className="inline-flex items-center gap-2 px-5 py-2 bg-white text-foreground font-bold rounded-xl shadow-sm border-2 border-border hover:bg-muted transition-colors"
+                  title="Сұрақтарды өзім жасау"
+                >
+                  ✏️ Сұрақтар
+                </Link>
                 <button
                   onClick={() => saveStory.mutate({ id: story.id, quizEnabled: !story.quizEnabled })}
                   disabled={saveStory.isPending}
