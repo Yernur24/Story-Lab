@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-export type CustomQuizType = "multiple-choice" | "character-match" | "continue-story";
+export type CustomQuizType = "multiple-choice" | "character-match" | "continue-story" | "image-match";
 
 export interface CustomQuestion {
   id: string;
@@ -55,6 +55,13 @@ const TYPE_META: Record<CustomQuizType, { emoji: string; label: string; desc: st
     color: "bg-green-50 text-green-700",
     border: "border-green-200",
   },
+  "image-match": {
+    emoji: "🖼",
+    label: "Суретті анықта",
+    desc: "Emoji суретін көрсетіп, оқушы ертегіні табады",
+    color: "bg-orange-50 text-orange-700",
+    border: "border-orange-200",
+  },
 };
 
 function QuestionCard({
@@ -70,7 +77,7 @@ function QuestionCard({
 }) {
   const [expanded, setExpanded] = useState(true);
   const meta = TYPE_META[q.type];
-  const hasOptions = q.type === "multiple-choice" || q.type === "character-match";
+  const hasOptions = q.type === "multiple-choice" || q.type === "character-match" || q.type === "image-match";
 
   const updateOption = (i: number, val: string) => {
     const opts = [...q.options];
@@ -127,6 +134,30 @@ function QuestionCard({
             className="overflow-hidden"
           >
             <div className="px-5 pb-5 space-y-4 border-t-2 border-dashed border-border pt-4">
+
+              {/* Emoji image — only for image-match */}
+              {q.type === "image-match" && (
+                <div className="space-y-1">
+                  <label className="text-xs font-extrabold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                    🖼 Сурет (emoji) — оқушыға үлкен көрсетіледі
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <div className="text-5xl w-16 h-16 bg-orange-50 border-2 border-orange-200 rounded-2xl flex items-center justify-center flex-shrink-0">
+                      {q.hint || "🖼"}
+                    </div>
+                    <input
+                      type="text"
+                      value={q.hint}
+                      onChange={e => onChange({ ...q, hint: e.target.value })}
+                      placeholder="Emoji теріңіз, мысалы: 🐠 немесе 🌊"
+                      className="flex-1 bg-muted/50 border-2 border-orange-200 rounded-xl py-3 px-4 text-2xl font-medium focus:outline-none focus:border-orange-400 focus:bg-white transition-all"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground font-medium pt-1">
+                    💡 Кеңес: Emoji клавиатурасын ашу үшін Windows: Win+. / Mac: Ctrl+Cmd+Space
+                  </p>
+                </div>
+              )}
 
               {/* Snippet — only for continue-story */}
               {q.type === "continue-story" && (
@@ -198,19 +229,21 @@ function QuestionCard({
                 </div>
               )}
 
-              {/* Hint */}
-              <div className="space-y-1">
-                <label className="text-xs font-extrabold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-                  <Lightbulb className="w-3.5 h-3.5" /> Кеңес (міндетті емес)
-                </label>
-                <input
-                  type="text"
-                  value={q.hint}
-                  onChange={e => onChange({ ...q, hint: e.target.value })}
-                  placeholder="Оқушыға берілетін кеңес..."
-                  className="w-full bg-muted/50 border-2 border-border rounded-xl py-2.5 px-4 text-sm font-medium focus:outline-none focus:border-yellow-400 focus:bg-white transition-all"
-                />
-              </div>
+              {/* Hint — hidden for image-match (hint is used as the emoji image) */}
+              {q.type !== "image-match" && (
+                <div className="space-y-1">
+                  <label className="text-xs font-extrabold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                    <Lightbulb className="w-3.5 h-3.5" /> Кеңес (міндетті емес)
+                  </label>
+                  <input
+                    type="text"
+                    value={q.hint}
+                    onChange={e => onChange({ ...q, hint: e.target.value })}
+                    placeholder="Оқушыға берілетін кеңес..."
+                    className="w-full bg-muted/50 border-2 border-border rounded-xl py-2.5 px-4 text-sm font-medium focus:outline-none focus:border-yellow-400 focus:bg-white transition-all"
+                  />
+                </div>
+              )}
             </div>
           </motion.div>
         )}
@@ -294,6 +327,7 @@ export default function QuizEditor() {
   const mcCount = questions.filter(q => q.type === "multiple-choice").length;
   const cmCount = questions.filter(q => q.type === "character-match").length;
   const csCount = questions.filter(q => q.type === "continue-story").length;
+  const imCount = questions.filter(q => q.type === "image-match").length;
 
   return (
     <div className="min-h-screen pb-32 py-8">
@@ -318,6 +352,7 @@ export default function QuizEditor() {
               {mcCount > 0 && <span className="text-xs font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full">🎯 {mcCount}</span>}
               {cmCount > 0 && <span className="text-xs font-bold bg-pink-50 text-pink-700 px-2 py-0.5 rounded-full">🧑‍🤝‍🧑 {cmCount}</span>}
               {csCount > 0 && <span className="text-xs font-bold bg-green-50 text-green-700 px-2 py-0.5 rounded-full">✏️ {csCount}</span>}
+              {imCount > 0 && <span className="text-xs font-bold bg-orange-50 text-orange-700 px-2 py-0.5 rounded-full">🖼 {imCount}</span>}
               {questions.length === 0 && <span className="text-xs text-muted-foreground font-medium">Сұрақ жоқ</span>}
             </div>
           </div>
