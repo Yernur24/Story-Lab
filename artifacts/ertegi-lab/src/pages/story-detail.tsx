@@ -385,34 +385,36 @@ export default function StoryDetail() {
               )}
 
               <div className="flex flex-wrap gap-2 sm:gap-3">
-                <Link
-                  href={`/edit/${story.id}`}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-foreground font-bold rounded-xl shadow-sm border-2 border-border hover:bg-muted transition-colors text-sm"
-                >
-                  <Edit className="w-4 h-4" /> Өңдеу
-                </Link>
+                {/* Always visible: Game play button */}
+                {story.quizEnabled ? (
+                  <Link
+                    href={`/quiz/${story.id}`}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-xl shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all text-sm"
+                  >
+                    <Gamepad2 className="w-4 h-4" /> 🎮 Ойын
+                  </Link>
+                ) : (
+                  <span className="inline-flex items-center gap-2 px-4 py-2.5 bg-muted text-muted-foreground font-bold rounded-xl border-2 border-dashed border-border cursor-not-allowed text-sm">
+                    <Gamepad2 className="w-4 h-4" /> 🎮 Ойын өшірулі
+                  </span>
+                )}
 
+                {/* Password-protected admin section */}
                 {!isQuizUnlocked ? (
                   <button
                     onClick={() => { setShowPasswordModal(true); setPasswordInput(''); setPasswordError(false); }}
                     className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-50 text-amber-700 font-bold rounded-xl border-2 border-amber-200 hover:bg-amber-100 transition-colors text-sm"
                   >
-                    <Lock className="w-4 h-4" /> Ойын бөлімі
+                    <Lock className="w-4 h-4" /> Басқару
                   </button>
                 ) : (
                   <>
-                    {story.quizEnabled ? (
-                      <Link
-                        href={`/quiz/${story.id}`}
-                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-xl shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all text-sm"
-                      >
-                        <Gamepad2 className="w-4 h-4" /> 🎮 Ойын
-                      </Link>
-                    ) : (
-                      <span className="inline-flex items-center gap-2 px-4 py-2.5 bg-muted text-muted-foreground font-bold rounded-xl border-2 border-dashed border-border cursor-not-allowed text-sm">
-                        <Gamepad2 className="w-4 h-4" /> 🎮 Ойын өшірулі
-                      </span>
-                    )}
+                    <Link
+                      href={`/edit/${story.id}`}
+                      className="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-foreground font-bold rounded-xl shadow-sm border-2 border-border hover:bg-muted transition-colors text-sm"
+                    >
+                      <Edit className="w-4 h-4" /> Өңдеу
+                    </Link>
                     <Link
                       href={`/quiz-editor/${story.id}`}
                       className="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-foreground font-bold rounded-xl shadow-sm border-2 border-border hover:bg-muted transition-colors text-sm"
