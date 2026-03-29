@@ -4,11 +4,12 @@ import { useStory, useSaveStory } from "@/hooks/use-stories";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, Plus, Trash2, Save, CheckCircle2,
-  HelpCircle, PenLine, ChevronDown, ChevronUp, Lightbulb
+  HelpCircle, PenLine, ChevronDown, ChevronUp, Lightbulb,
+  Gamepad2, Play
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-export type CustomQuizType = "multiple-choice" | "continue-story";
+export type CustomQuizType = "multiple-choice" | "character-match" | "continue-story";
 
 export interface CustomQuestion {
   id: string;
@@ -32,18 +33,27 @@ function newQuestion(type: CustomQuizType): CustomQuestion {
   };
 }
 
-const TYPE_META: Record<CustomQuizType, { emoji: string; label: string; desc: string; color: string }> = {
+const TYPE_META: Record<CustomQuizType, { emoji: string; label: string; desc: string; color: string; border: string }> = {
   "multiple-choice": {
     emoji: "🎯",
     label: "Дұрыс жауапты таңда",
-    desc: "4 жауап нұсқасы бар сұрақ",
-    color: "bg-primary/10 border-primary/30 text-primary",
+    desc: "4 жауап нұсқасы — бірін дұрыс деп белгіле",
+    color: "bg-primary/10 text-primary",
+    border: "border-primary/30",
+  },
+  "character-match": {
+    emoji: "🧑‍🤝‍🧑",
+    label: "Кейіпкерді тап",
+    desc: "Ертегі кейіпкерін анықтайтын сұрақ",
+    color: "bg-pink-50 text-pink-700",
+    border: "border-pink-200",
   },
   "continue-story": {
     emoji: "✏️",
     label: "Ертегіні жалғастыр",
-    desc: "Бала өз жалғасын жазады",
-    color: "bg-green-50 border-green-200 text-green-700",
+    desc: "Бала өз жалғасын еркін жазады",
+    color: "bg-green-50 text-green-700",
+    border: "border-green-200",
   },
 };
 
@@ -60,6 +70,7 @@ function QuestionCard({
 }) {
   const [expanded, setExpanded] = useState(true);
   const meta = TYPE_META[q.type];
+  const hasOptions = q.type === "multiple-choice" || q.type === "character-match";
 
   const updateOption = (i: number, val: string) => {
     const opts = [...q.options];
@@ -76,11 +87,15 @@ function QuestionCard({
       transition={{ duration: 0.22 }}
       className="bg-white rounded-3xl border-4 border-border shadow-sm overflow-hidden"
     >
-      <div className="flex items-center gap-3 px-5 py-4 cursor-pointer select-none" onClick={() => setExpanded(e => !e)}>
+      {/* Header */}
+      <div
+        className="flex items-center gap-3 px-5 py-4 cursor-pointer select-none"
+        onClick={() => setExpanded(e => !e)}
+      >
         <div className="flex-shrink-0 w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center font-extrabold text-primary text-sm">
           {index + 1}
         </div>
-        <span className={`text-xs font-extrabold px-3 py-1 rounded-full border-2 ${meta.color}`}>
+        <span className={`text-xs font-extrabold px-3 py-1 rounded-full border-2 ${meta.color} ${meta.border}`}>
           {meta.emoji} {meta.label}
         </span>
         <p className="flex-1 font-bold text-foreground truncate text-sm min-w-0">
@@ -95,10 +110,13 @@ function QuestionCard({
           >
             <Trash2 className="w-4 h-4" />
           </button>
-          {expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+          {expanded
+            ? <ChevronUp className="w-4 h-4 text-muted-foreground" />
+            : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
         </div>
       </div>
 
+      {/* Body */}
       <AnimatePresence>
         {expanded && (
           <motion.div
@@ -109,6 +127,8 @@ function QuestionCard({
             className="overflow-hidden"
           >
             <div className="px-5 pb-5 space-y-4 border-t-2 border-dashed border-border pt-4">
+
+              {/* Snippet — only for continue-story */}
               {q.type === "continue-story" && (
                 <div className="space-y-1">
                   <label className="text-xs font-extrabold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
@@ -124,6 +144,7 @@ function QuestionCard({
                 </div>
               )}
 
+              {/* Question text */}
               <div className="space-y-1">
                 <label className="text-xs font-extrabold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
                   <HelpCircle className="w-3.5 h-3.5" /> Сұрақ мәтіні
@@ -137,10 +158,11 @@ function QuestionCard({
                 />
               </div>
 
-              {q.type === "multiple-choice" && (
+              {/* Options */}
+              {hasOptions && (
                 <div className="space-y-2">
                   <label className="text-xs font-extrabold text-muted-foreground uppercase tracking-wide">
-                    Жауап нұсқалары (дұрысын таңда)
+                    Жауап нұсқалары — дұрысын жасылға басыңыз
                   </label>
                   <div className="space-y-2">
                     {q.options.map((opt, i) => (
@@ -153,7 +175,6 @@ function QuestionCard({
                               ? "bg-green-500 border-green-500 text-white shadow-md"
                               : "bg-white border-border text-muted-foreground hover:border-green-400"
                           }`}
-                          title="Дұрыс жауап ретінде белгіле"
                         >
                           {["A", "B", "C", "D"][i]}
                         </button>
@@ -162,10 +183,10 @@ function QuestionCard({
                           value={opt}
                           onChange={e => updateOption(i, e.target.value)}
                           placeholder={`${["A", "B", "C", "D"][i]} нұсқасы...`}
-                          className={`flex-1 bg-muted/50 border-2 rounded-xl py-2.5 px-4 text-sm font-medium focus:outline-none transition-all ${
+                          className={`flex-1 border-2 rounded-xl py-2.5 px-4 text-sm font-medium focus:outline-none transition-all ${
                             q.correctIndex === i
                               ? "border-green-300 bg-green-50 focus:border-green-400"
-                              : "border-border focus:border-primary focus:bg-white"
+                              : "bg-muted/50 border-border focus:border-primary focus:bg-white"
                           }`}
                         />
                         {q.correctIndex === i && (
@@ -174,12 +195,10 @@ function QuestionCard({
                       </div>
                     ))}
                   </div>
-                  <p className="text-xs text-muted-foreground font-medium">
-                    🟢 Жасыл дөңгелекке басу = дұрыс жауап
-                  </p>
                 </div>
               )}
 
+              {/* Hint */}
               <div className="space-y-1">
                 <label className="text-xs font-extrabold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
                   <Lightbulb className="w-3.5 h-3.5" /> Кеңес (міндетті емес)
@@ -209,12 +228,16 @@ export default function QuizEditor() {
   const saveStory = useSaveStory();
 
   const [questions, setQuestions] = useState<CustomQuestion[]>([]);
+  const [quizEnabled, setQuizEnabled] = useState(false);
   const [showTypeMenu, setShowTypeMenu] = useState(false);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    if (story?.quizQuestions && Array.isArray(story.quizQuestions)) {
-      setQuestions(story.quizQuestions as CustomQuestion[]);
+    if (story) {
+      if (story.quizQuestions && Array.isArray(story.quizQuestions)) {
+        setQuestions(story.quizQuestions as CustomQuestion[]);
+      }
+      setQuizEnabled(story.quizEnabled !== false);
     }
   }, [story?.id]);
 
@@ -236,11 +259,11 @@ export default function QuizEditor() {
 
   const handleSave = () => {
     saveStory.mutate(
-      { id, quizQuestions: questions as object[] },
+      { id, quizQuestions: questions as object[], quizEnabled },
       {
         onSuccess: () => {
           setSaved(true);
-          toast({ title: "✅ Сақталды!", description: `${questions.length} сұрақ дерекқорға сақталды` });
+          toast({ title: "✅ Сақталды!", description: `${questions.length} сұрақ базаға жазылды` });
           setTimeout(() => setSaved(false), 3000);
         },
         onError: () => {
@@ -253,9 +276,7 @@ export default function QuizEditor() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="text-6xl">
-          🌟
-        </motion.div>
+        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="text-6xl">🌟</motion.div>
       </div>
     );
   }
@@ -270,34 +291,70 @@ export default function QuizEditor() {
     );
   }
 
+  const mcCount = questions.filter(q => q.type === "multiple-choice").length;
+  const cmCount = questions.filter(q => q.type === "character-match").length;
+  const csCount = questions.filter(q => q.type === "continue-story").length;
+
   return (
     <div className="min-h-screen pb-32 py-8">
       <div className="max-w-2xl mx-auto px-4 sm:px-6">
 
+        {/* Back */}
         <Link href={`/story/${id}`} className="inline-flex items-center gap-2 text-muted-foreground font-bold hover:text-foreground transition-colors mb-6">
           <ArrowLeft className="w-5 h-5" /> Ертегіге қайту
         </Link>
 
-        <div className="bg-white rounded-3xl border-4 border-border shadow-sm p-6 mb-6 flex items-center gap-4">
+        {/* Story card */}
+        <div className="bg-white rounded-3xl border-4 border-border shadow-sm p-5 mb-5 flex items-center gap-4">
           <div className="w-14 h-14 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center text-3xl shadow-sm flex-shrink-0 overflow-hidden">
             {story.images?.[0]
               ? <img src={story.images[0]} alt="" className="w-full h-full object-cover" />
               : story.coverEmoji}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-extrabold text-muted-foreground uppercase tracking-wide mb-0.5">🗄 Базаға сақталады</p>
+            <p className="text-xs font-extrabold text-muted-foreground uppercase tracking-wide mb-0.5">Ойын редакторы</p>
             <h1 className="text-xl font-display font-extrabold text-foreground truncate">{story.title}</h1>
-            <p className="text-sm text-muted-foreground font-medium">{questions.length} сұрақ</p>
+            <div className="flex gap-2 mt-1 flex-wrap">
+              {mcCount > 0 && <span className="text-xs font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full">🎯 {mcCount}</span>}
+              {cmCount > 0 && <span className="text-xs font-bold bg-pink-50 text-pink-700 px-2 py-0.5 rounded-full">🧑‍🤝‍🧑 {cmCount}</span>}
+              {csCount > 0 && <span className="text-xs font-bold bg-green-50 text-green-700 px-2 py-0.5 rounded-full">✏️ {csCount}</span>}
+              {questions.length === 0 && <span className="text-xs text-muted-foreground font-medium">Сұрақ жоқ</span>}
+            </div>
           </div>
           <Link
             href={`/quiz/${id}`}
-            className="flex-shrink-0 px-4 py-2 bg-primary/10 text-primary font-bold text-sm rounded-xl border-2 border-primary/20 hover:bg-primary/20 transition-all"
+            className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 bg-primary text-white font-bold text-sm rounded-xl shadow-md hover:-translate-y-0.5 transition-all"
           >
-            🎮 Ойнау
+            <Play className="w-4 h-4" /> Ойнау
           </Link>
         </div>
 
-        <div className="space-y-4 mb-6">
+        {/* Quiz on/off toggle */}
+        <div className={`rounded-3xl border-4 p-5 mb-5 transition-all ${quizEnabled ? 'bg-primary/5 border-primary/30' : 'bg-muted/30 border-border'}`}>
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className={`p-2.5 rounded-2xl transition-colors ${quizEnabled ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'}`}>
+                <Gamepad2 className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="font-extrabold text-foreground">🎮 Ойын (Викторина)</p>
+                <p className="text-sm text-muted-foreground font-medium">
+                  {quizEnabled ? 'Ойын қосулы — оқырмандар тест тапсыра алады' : 'Ойын өшірулі'}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setQuizEnabled(v => !v); setSaved(false); }}
+              className={`relative w-14 h-8 rounded-full transition-colors duration-300 focus:outline-none flex-shrink-0 ${quizEnabled ? 'bg-primary' : 'bg-muted-foreground/30'}`}
+            >
+              <span className={`absolute top-1 left-1 w-6 h-6 rounded-full bg-white shadow-md transition-transform duration-300 ${quizEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
+            </button>
+          </div>
+        </div>
+
+        {/* Questions list */}
+        <div className="space-y-4 mb-5">
           <AnimatePresence>
             {questions.map((q, idx) => (
               <QuestionCard
@@ -314,7 +371,7 @@ export default function QuizEditor() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-center py-16 bg-white rounded-3xl border-4 border-dashed border-border"
+              className="text-center py-14 bg-white rounded-3xl border-4 border-dashed border-border"
             >
               <div className="text-5xl mb-3">🎮</div>
               <p className="font-bold text-foreground text-lg mb-1">Сұрақ жоқ</p>
@@ -323,7 +380,8 @@ export default function QuizEditor() {
           )}
         </div>
 
-        <div className="relative mb-4">
+        {/* Add question */}
+        <div className="relative mb-6">
           <button
             type="button"
             onClick={() => setShowTypeMenu(v => !v)}
@@ -348,7 +406,7 @@ export default function QuizEditor() {
                     onClick={() => addQuestion(type)}
                     className="w-full flex items-center gap-4 px-6 py-4 hover:bg-muted/50 transition-colors text-left border-b last:border-b-0 border-border"
                   >
-                    <span className="text-3xl">{meta.emoji}</span>
+                    <span className={`text-2xl w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${meta.color}`}>{meta.emoji}</span>
                     <div>
                       <p className="font-extrabold text-foreground">{meta.label}</p>
                       <p className="text-sm text-muted-foreground font-medium">{meta.desc}</p>
@@ -360,6 +418,7 @@ export default function QuizEditor() {
           </AnimatePresence>
         </div>
 
+        {/* Sticky save button */}
         <div className="fixed bottom-6 left-0 right-0 px-4 z-30 max-w-2xl mx-auto">
           <motion.button
             type="button"
@@ -375,10 +434,11 @@ export default function QuizEditor() {
             {saveStory.isPending
               ? <>⏳ Сақталуда...</>
               : saved
-              ? <><CheckCircle2 className="w-6 h-6" /> Сақталды! (базада)</>
-              : <><Save className="w-6 h-6" /> 💾 Базаға сақтау ({questions.length} сұрақ)</>}
+              ? <><CheckCircle2 className="w-6 h-6" /> Сақталды!</>
+              : <><Save className="w-6 h-6" /> Сақтау — {questions.length} сұрақ, ойын {quizEnabled ? 'қосулы' : 'өшірулі'}</>}
           </motion.button>
         </div>
+
       </div>
     </div>
   );
