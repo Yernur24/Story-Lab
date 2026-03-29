@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRoute } from "wouter";
 import { useStory, useAddVoiceRecording, useDeleteVoiceRecording, useToggleFavorite, useIncrementReadCount, useSaveStory, useRateStory } from "@/hooks/use-stories";
-import { ArrowLeft, Edit, Headphones, PlayCircle, Image as ImageIcon, BookOpen, Heart, Share2, Trash2, Check, ChevronLeft, ChevronRight, Gamepad2, Mic, Play, Pause, Star } from "lucide-react";
+import { ArrowLeft, Edit, Headphones, PlayCircle, Image as ImageIcon, BookOpen, Heart, Share2, Trash2, Check, ChevronLeft, ChevronRight, Gamepad2, Mic, Play, Pause, Star, Lock, Unlock, Eye, EyeOff } from "lucide-react";
 import { trackRead } from "@/lib/stats";
 import { Link } from "wouter";
 import { AudioRecorder } from "@/components/AudioRecorder";
@@ -160,6 +160,13 @@ export default function StoryDetail() {
   const [currentPage, setCurrentPage] = useState(0);
   const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string | null>(null);
   const [videoLoadState, setVideoLoadState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+
+  const [isQuizUnlocked, setIsQuizUnlocked] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordError, setPasswordError] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const QUIZ_PASSWORD = 'StroryLab2026';
 
   useEffect(() => {
     if (id) {
@@ -377,41 +384,144 @@ export default function StoryDetail() {
                 </motion.button>
               )}
 
-              <div className="flex flex-wrap gap-3">
-                <Link href={`/edit/${story.id}`} className="inline-flex items-center gap-2 px-5 py-2 bg-white text-foreground font-bold rounded-xl shadow-sm border-2 border-border hover:bg-muted transition-colors">
+              <div className="flex flex-wrap gap-2 sm:gap-3">
+                <Link
+                  href={`/edit/${story.id}`}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-foreground font-bold rounded-xl shadow-sm border-2 border-border hover:bg-muted transition-colors text-sm"
+                >
                   <Edit className="w-4 h-4" /> Өңдеу
                 </Link>
-                {story.quizEnabled ? (
-                  <Link
-                    href={`/quiz/${story.id}`}
-                    className="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-xl shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all"
+
+                {!isQuizUnlocked ? (
+                  <button
+                    onClick={() => { setShowPasswordModal(true); setPasswordInput(''); setPasswordError(false); }}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-50 text-amber-700 font-bold rounded-xl border-2 border-amber-200 hover:bg-amber-100 transition-colors text-sm"
                   >
-                    <Gamepad2 className="w-4 h-4" /> 🎮 Ойын
-                  </Link>
+                    <Lock className="w-4 h-4" /> Ойын бөлімі
+                  </button>
                 ) : (
-                  <span className="inline-flex items-center gap-2 px-5 py-2 bg-muted text-muted-foreground font-bold rounded-xl border-2 border-dashed border-border cursor-not-allowed">
-                    <Gamepad2 className="w-4 h-4" /> 🎮 Ойын өшірулі
-                  </span>
+                  <>
+                    {story.quizEnabled ? (
+                      <Link
+                        href={`/quiz/${story.id}`}
+                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-xl shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all text-sm"
+                      >
+                        <Gamepad2 className="w-4 h-4" /> 🎮 Ойын
+                      </Link>
+                    ) : (
+                      <span className="inline-flex items-center gap-2 px-4 py-2.5 bg-muted text-muted-foreground font-bold rounded-xl border-2 border-dashed border-border cursor-not-allowed text-sm">
+                        <Gamepad2 className="w-4 h-4" /> 🎮 Ойын өшірулі
+                      </span>
+                    )}
+                    <Link
+                      href={`/quiz-editor/${story.id}`}
+                      className="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-foreground font-bold rounded-xl shadow-sm border-2 border-border hover:bg-muted transition-colors text-sm"
+                    >
+                      ✏️ Ойынды құрастыру
+                    </Link>
+                    <button
+                      onClick={() => saveStory.mutate({ id: story.id, quizEnabled: !story.quizEnabled })}
+                      disabled={saveStory.isPending}
+                      className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-bold rounded-xl border-2 transition-all ${story.quizEnabled ? 'border-primary/30 text-primary bg-primary/5 hover:bg-primary/10' : 'border-border text-muted-foreground bg-muted/40 hover:bg-muted'}`}
+                    >
+                      <span className={`w-5 h-3 rounded-full relative inline-block transition-colors flex-shrink-0 ${story.quizEnabled ? 'bg-primary' : 'bg-muted-foreground/40'}`}>
+                        <span className={`absolute top-0.5 w-2 h-2 rounded-full bg-white shadow transition-transform ${story.quizEnabled ? 'translate-x-2.5' : 'translate-x-0.5'}`} />
+                      </span>
+                      {story.quizEnabled ? 'Өшіру' : 'Қосу'}
+                    </button>
+                    <button
+                      onClick={() => setIsQuizUnlocked(false)}
+                      className="inline-flex items-center gap-1.5 px-3 py-2.5 text-xs font-bold rounded-xl border-2 border-border text-muted-foreground hover:bg-muted transition-colors"
+                      title="Жабу"
+                    >
+                      <Lock className="w-3.5 h-3.5" />
+                    </button>
+                  </>
                 )}
-                <Link
-                  href={`/quiz-editor/${story.id}`}
-                  className="inline-flex items-center gap-2 px-5 py-2 bg-white text-foreground font-bold rounded-xl shadow-sm border-2 border-border hover:bg-muted transition-colors"
-                  title="Сұрақтарды өзім жасау"
-                >
-                  ✏️ Сұрақтар
-                </Link>
-                <button
-                  onClick={() => saveStory.mutate({ id: story.id, quizEnabled: !story.quizEnabled })}
-                  disabled={saveStory.isPending}
-                  className={`inline-flex items-center gap-2 px-3 py-2 text-xs font-bold rounded-xl border-2 transition-all ${story.quizEnabled ? 'border-primary/30 text-primary bg-primary/5 hover:bg-primary/10' : 'border-border text-muted-foreground bg-muted/40 hover:bg-muted'}`}
-                  title={story.quizEnabled ? 'Ойынды өшіру' : 'Ойынды қосу'}
-                >
-                  <span className={`w-5 h-3 rounded-full relative inline-block transition-colors ${story.quizEnabled ? 'bg-primary' : 'bg-muted-foreground/40'}`}>
-                    <span className={`absolute top-0.5 w-2 h-2 rounded-full bg-white shadow transition-transform ${story.quizEnabled ? 'translate-x-2.5' : 'translate-x-0.5'}`} />
-                  </span>
-                  {story.quizEnabled ? 'Өшіру' : 'Қосу'}
-                </button>
               </div>
+
+              {/* Password Modal */}
+              <AnimatePresence>
+                {showPasswordModal && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
+                    onClick={(e) => { if (e.target === e.currentTarget) setShowPasswordModal(false); }}
+                  >
+                    <motion.div
+                      initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                      animate={{ scale: 1, opacity: 1, y: 0 }}
+                      exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                      className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm"
+                    >
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                          <Lock className="w-5 h-5 text-amber-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-extrabold text-foreground text-base">Ойын бөлімі</h3>
+                          <p className="text-xs text-muted-foreground">Кіру үшін пароль енгізіңіз</p>
+                        </div>
+                      </div>
+                      <div className="relative mb-3">
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          value={passwordInput}
+                          onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(false); }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              if (passwordInput === QUIZ_PASSWORD) {
+                                setIsQuizUnlocked(true);
+                                setShowPasswordModal(false);
+                                setPasswordInput('');
+                              } else {
+                                setPasswordError(true);
+                              }
+                            }
+                          }}
+                          placeholder="Пароль..."
+                          autoFocus
+                          className={`w-full px-4 py-3 pr-10 rounded-xl border-2 font-medium text-sm outline-none transition-colors ${passwordError ? 'border-red-400 bg-red-50' : 'border-border focus:border-primary bg-muted/30'}`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(v => !v)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      {passwordError && (
+                        <p className="text-red-500 text-xs font-medium mb-3">❌ Пароль дұрыс емес</p>
+                      )}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setShowPasswordModal(false)}
+                          className="flex-1 px-4 py-2.5 rounded-xl border-2 border-border text-muted-foreground font-bold text-sm hover:bg-muted transition-colors"
+                        >
+                          Болдырмау
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (passwordInput === QUIZ_PASSWORD) {
+                              setIsQuizUnlocked(true);
+                              setShowPasswordModal(false);
+                              setPasswordInput('');
+                            } else {
+                              setPasswordError(true);
+                            }
+                          }}
+                          className="flex-1 px-4 py-2.5 rounded-xl bg-primary text-white font-bold text-sm hover:opacity-90 transition-opacity"
+                        >
+                          <Unlock className="w-4 h-4 inline mr-1.5" />Ашу
+                        </button>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </div>
