@@ -3,13 +3,13 @@ import { useLocation, useRoute } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useSaveStory, useStory } from "@/hooks/use-stories";
+import { useSaveStory, useStory, useDeleteStory } from "@/hooks/use-stories";
 import { fileToBase64, StoryCategory } from "@/lib/storage";
 import { apiClient } from "@/lib/api-client";
-import { ArrowLeft, Save, Image as ImageIcon, Music, Video, Sparkles, Link2, Upload, Gamepad2 } from "lucide-react";
+import { ArrowLeft, Save, Image as ImageIcon, Music, Video, Sparkles, Link2, Upload, Gamepad2, Trash2, AlertTriangle } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 const formSchema = z.object({
   title: z.string().min(2, "Атауы өте қысқа"),
@@ -38,6 +38,8 @@ export default function StoryForm() {
 
   const { data: existingStory, isLoading: isLoadingStory } = useStory(params?.id || "");
   const saveStory = useSaveStory();
+  const deleteStory = useDeleteStory();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const [audioMode, setAudioMode] = useState<AudioMode>('file');
   const [audioBase64, setAudioBase64] = useState<string | undefined>();
@@ -594,9 +596,86 @@ export default function StoryForm() {
                 {saveStory.isPending ? '⏳ Сақталуда...' : '💾 Сақтау'}
               </button>
             </div>
+
+            {/* Delete — edit mode only */}
+            {isEdit && (
+              <div className="pt-4 border-t-2 border-dashed border-destructive/30 mt-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-destructive/5 rounded-2xl p-4 border-2 border-destructive/20">
+                  <div>
+                    <p className="font-extrabold text-destructive">🗑 Ертегіні өшіру</p>
+                    <p className="text-sm text-muted-foreground">Бұл әрекет кері қайтарылмайды</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="flex items-center gap-2 px-6 py-3 bg-destructive text-white font-bold rounded-2xl shadow-[0_4px_0_hsl(0,70%,35%)] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all flex-shrink-0"
+                  >
+                    <Trash2 className="w-5 h-5" /> Өшіру
+                  </button>
+                </div>
+              </div>
+            )}
           </form>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowDeleteConfirm(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.85, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.85, y: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className="bg-white rounded-3xl border-4 border-border shadow-2xl max-w-sm w-full p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex flex-col items-center text-center gap-3">
+                <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-1">
+                  <AlertTriangle className="w-8 h-8 text-destructive" />
+                </div>
+                <h2 className="text-xl font-display font-extrabold text-foreground">
+                  Өшіруге сенімдісіз бе?
+                </h2>
+                <p className="text-muted-foreground font-medium text-sm leading-relaxed">
+                  <span className="font-bold text-foreground">«{existingStory?.title}»</span> ертегісі біржола жойылады. Бұл әрекетті кері қайтару мүмкін емес.
+                </p>
+              </div>
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 py-3 rounded-2xl border-4 border-border font-bold text-foreground hover:border-primary/50 transition-all"
+                >
+                  Болдырмау
+                </button>
+                <button
+                  onClick={() => {
+                    if (params?.id) {
+                      deleteStory.mutate(params.id, {
+                        onSuccess: () => {
+                          toast({ title: "🗑 Өшірілді", description: "Ертегі жойылды" });
+                          setLocation('/library');
+                        },
+                      });
+                    }
+                  }}
+                  disabled={deleteStory.isPending}
+                  className="flex-1 py-3 rounded-2xl bg-destructive text-white font-bold shadow-[0_4px_0_hsl(0,70%,35%)] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none transition-all disabled:opacity-60"
+                >
+                  {deleteStory.isPending ? 'Өшірілуде...' : 'Иә, өшіру'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
