@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { CreateStoryInputCategory } from "./createStoryInputCategory";
+import type { CreateStoryInputQuizQuestionsItem } from "./createStoryInputQuizQuestionsItem";
 
 export interface CreateStoryInput {
   title: string;
@@ -16,6 +17,7 @@ export interface CreateStoryInput {
   videoUrl?: string | null;
   videoFile?: string | null;
   quizEnabled?: boolean;
+  quizQuestions?: CreateStoryInputQuizQuestionsItem[];
   audioFile?: string | null;
   images?: string[];
   voiceRecordings?: string[];

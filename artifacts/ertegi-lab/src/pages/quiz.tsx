@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Trophy, RotateCcw, ChevronRight, Lightbulb, CheckCircle2, XCircle, Pencil, Settings2 } from "lucide-react";
 import { getQuizForStory, generateAutoQuiz, generateImageMatchQuestions, QuizQuestion, QuizType } from "@/data/quizData";
 import { trackQuiz } from "@/lib/stats";
-import { loadCustomQuiz } from "./quiz-editor";
+import type { CustomQuestion } from "./quiz-editor";
 
 const GAME_TYPE_LABELS: Record<QuizType, string> = {
   'multiple-choice': '🎯 Дұрыс жауапты таңда',
@@ -48,16 +48,15 @@ export default function QuizPage() {
     ? allStories.map(s => ({ id: s.id, title: s.title, coverEmoji: s.coverEmoji }))
     : [];
 
-  const customQuestions: QuizQuestion[] = id
-    ? loadCustomQuiz(id).map(q => ({
-        type: q.type as QuizType,
-        question: q.question,
-        options: q.options,
-        correctIndex: q.correctIndex,
-        hint: q.hint || undefined,
-        snippet: q.snippet || undefined,
-      }))
-    : [];
+  const customQuestions: QuizQuestion[] = (story?.quizQuestions as CustomQuestion[] | undefined ?? [])
+    .map(q => ({
+      type: q.type as QuizType,
+      question: q.question,
+      options: q.options,
+      correctIndex: q.correctIndex,
+      hint: q.hint || undefined,
+      snippet: q.snippet || undefined,
+    }));
 
   const manualQuestions = story ? getQuizForStory(story.title) : [];
   const storyQuestions = manualQuestions.length > 0

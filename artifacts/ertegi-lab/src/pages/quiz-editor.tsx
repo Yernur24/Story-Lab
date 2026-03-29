@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { useRoute, Link, useLocation } from "wouter";
-import { useStory } from "@/hooks/use-stories";
+import { useRoute, Link } from "wouter";
+import { useStory, useSaveStory } from "@/hooks/use-stories";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowLeft, Plus, Trash2, Save, CheckCircle2, GripVertical,
+  ArrowLeft, Plus, Trash2, Save, CheckCircle2,
   HelpCircle, PenLine, ChevronDown, ChevronUp, Lightbulb
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -18,21 +18,6 @@ export interface CustomQuestion {
   correctIndex: number;
   hint: string;
   snippet: string;
-}
-
-const STORAGE_KEY = (storyId: string) => `quiz_custom_${storyId}`;
-
-export function loadCustomQuiz(storyId: string): CustomQuestion[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY(storyId));
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveCustomQuiz(storyId: string, questions: CustomQuestion[]) {
-  localStorage.setItem(STORAGE_KEY(storyId), JSON.stringify(questions));
 }
 
 function newQuestion(type: CustomQuizType): CustomQuestion {
@@ -91,7 +76,6 @@ function QuestionCard({
       transition={{ duration: 0.22 }}
       className="bg-white rounded-3xl border-4 border-border shadow-sm overflow-hidden"
     >
-      {/* Card header */}
       <div className="flex items-center gap-3 px-5 py-4 cursor-pointer select-none" onClick={() => setExpanded(e => !e)}>
         <div className="flex-shrink-0 w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center font-extrabold text-primary text-sm">
           {index + 1}
@@ -115,7 +99,6 @@ function QuestionCard({
         </div>
       </div>
 
-      {/* Card body */}
       <AnimatePresence>
         {expanded && (
           <motion.div
@@ -126,7 +109,6 @@ function QuestionCard({
             className="overflow-hidden"
           >
             <div className="px-5 pb-5 space-y-4 border-t-2 border-dashed border-border pt-4">
-              {/* Continue-story snippet */}
               {q.type === "continue-story" && (
                 <div className="space-y-1">
                   <label className="text-xs font-extrabold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
@@ -142,7 +124,6 @@ function QuestionCard({
                 </div>
               )}
 
-              {/* Question text */}
               <div className="space-y-1">
                 <label className="text-xs font-extrabold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
                   <HelpCircle className="w-3.5 h-3.5" /> Сұрақ мәтіні
@@ -156,7 +137,6 @@ function QuestionCard({
                 />
               </div>
 
-              {/* Options for multiple-choice */}
               {q.type === "multiple-choice" && (
                 <div className="space-y-2">
                   <label className="text-xs font-extrabold text-muted-foreground uppercase tracking-wide">
@@ -200,7 +180,6 @@ function QuestionCard({
                 </div>
               )}
 
-              {/* Hint */}
               <div className="space-y-1">
                 <label className="text-xs font-extrabold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
                   <Lightbulb className="w-3.5 h-3.5" /> Кеңес (міндетті емес)
@@ -224,17 +203,20 @@ function QuestionCard({
 export default function QuizEditor() {
   const [, params] = useRoute("/quiz-editor/:id");
   const id = params?.id || "";
-  const [, setLocation] = useLocation();
   const { toast } = useToast();
 
   const { data: story, isLoading } = useStory(id);
+  const saveStory = useSaveStory();
+
   const [questions, setQuestions] = useState<CustomQuestion[]>([]);
-  const [saved, setSaved] = useState(false);
   const [showTypeMenu, setShowTypeMenu] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    if (id) setQuestions(loadCustomQuiz(id));
-  }, [id]);
+    if (story?.quizQuestions && Array.isArray(story.quizQuestions)) {
+      setQuestions(story.quizQuestions as CustomQuestion[]);
+    }
+  }, [story?.id]);
 
   const addQuestion = (type: CustomQuizType) => {
     setQuestions(prev => [...prev, newQuestion(type)]);
@@ -253,10 +235,19 @@ export default function QuizEditor() {
   };
 
   const handleSave = () => {
-    saveCustomQuiz(id, questions);
-    setSaved(true);
-    toast({ title: "✅ Сақталды!", description: `${questions.length} сұрақ сақталды` });
-    setTimeout(() => setSaved(false), 3000);
+    saveStory.mutate(
+      { id, quizQuestions: questions as object[] },
+      {
+        onSuccess: () => {
+          setSaved(true);
+          toast({ title: "✅ Сақталды!", description: `${questions.length} сұрақ дерекқорға сақталды` });
+          setTimeout(() => setSaved(false), 3000);
+        },
+        onError: () => {
+          toast({ title: "Қате", description: "Сақтау сәтсіз аяқталды", variant: "destructive" });
+        },
+      }
+    );
   };
 
   if (isLoading) {
@@ -283,12 +274,10 @@ export default function QuizEditor() {
     <div className="min-h-screen pb-32 py-8">
       <div className="max-w-2xl mx-auto px-4 sm:px-6">
 
-        {/* Back link */}
         <Link href={`/story/${id}`} className="inline-flex items-center gap-2 text-muted-foreground font-bold hover:text-foreground transition-colors mb-6">
           <ArrowLeft className="w-5 h-5" /> Ертегіге қайту
         </Link>
 
-        {/* Header */}
         <div className="bg-white rounded-3xl border-4 border-border shadow-sm p-6 mb-6 flex items-center gap-4">
           <div className="w-14 h-14 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center text-3xl shadow-sm flex-shrink-0 overflow-hidden">
             {story.images?.[0]
@@ -296,7 +285,7 @@ export default function QuizEditor() {
               : story.coverEmoji}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-extrabold text-muted-foreground uppercase tracking-wide mb-0.5">Ойын редакторы</p>
+            <p className="text-xs font-extrabold text-muted-foreground uppercase tracking-wide mb-0.5">🗄 Базаға сақталады</p>
             <h1 className="text-xl font-display font-extrabold text-foreground truncate">{story.title}</h1>
             <p className="text-sm text-muted-foreground font-medium">{questions.length} сұрақ</p>
           </div>
@@ -308,7 +297,6 @@ export default function QuizEditor() {
           </Link>
         </div>
 
-        {/* Questions list */}
         <div className="space-y-4 mb-6">
           <AnimatePresence>
             {questions.map((q, idx) => (
@@ -335,7 +323,6 @@ export default function QuizEditor() {
           )}
         </div>
 
-        {/* Add question button */}
         <div className="relative mb-4">
           <button
             type="button"
@@ -373,21 +360,23 @@ export default function QuizEditor() {
           </AnimatePresence>
         </div>
 
-        {/* Save button — sticky bottom */}
         <div className="fixed bottom-6 left-0 right-0 px-4 z-30 max-w-2xl mx-auto">
           <motion.button
             type="button"
             onClick={handleSave}
+            disabled={saveStory.isPending}
             whileTap={{ scale: 0.97 }}
             className={`w-full py-4 font-extrabold text-lg rounded-2xl shadow-xl flex items-center justify-center gap-3 transition-all ${
               saved
                 ? "bg-green-500 text-white shadow-[0_6px_0_hsl(150,60%,30%)]"
-                : "bg-primary text-white shadow-[0_6px_0_hsl(var(--primary-border))] hover:-translate-y-0.5 hover:shadow-[0_10px_0_hsl(var(--primary-border))]"
+                : "bg-primary text-white shadow-[0_6px_0_hsl(var(--primary-border))] hover:-translate-y-0.5 hover:shadow-[0_10px_0_hsl(var(--primary-border))] disabled:opacity-60"
             }`}
           >
-            {saved
-              ? <><CheckCircle2 className="w-6 h-6" /> Сақталды!</>
-              : <><Save className="w-6 h-6" /> 💾 Сақтау ({questions.length} сұрақ)</>}
+            {saveStory.isPending
+              ? <>⏳ Сақталуда...</>
+              : saved
+              ? <><CheckCircle2 className="w-6 h-6" /> Сақталды! (базада)</>
+              : <><Save className="w-6 h-6" /> 💾 Базаға сақтау ({questions.length} сұрақ)</>}
           </motion.button>
         </div>
       </div>

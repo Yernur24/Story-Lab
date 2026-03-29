@@ -22,6 +22,8 @@ export const StoryCategory = {
   custom: "custom",
 } as const;
 
+export type StoryQuizQuestionsItem = { [key: string]: unknown };
+
 export interface Story {
   id: string;
   title: string;
@@ -32,6 +34,7 @@ export interface Story {
   videoUrl?: string | null;
   videoFile?: string | null;
   quizEnabled: boolean;
+  quizQuestions: StoryQuizQuestionsItem[];
   audioFile?: string | null;
   images: string[];
   voiceRecordings: string[];
@@ -50,6 +53,8 @@ export const CreateStoryInputCategory = {
   custom: "custom",
 } as const;
 
+export type CreateStoryInputQuizQuestionsItem = { [key: string]: unknown };
+
 export interface CreateStoryInput {
   title: string;
   category: CreateStoryInputCategory;
@@ -59,6 +64,7 @@ export interface CreateStoryInput {
   videoUrl?: string | null;
   videoFile?: string | null;
   quizEnabled?: boolean;
+  quizQuestions?: CreateStoryInputQuizQuestionsItem[];
   audioFile?: string | null;
   images?: string[];
   voiceRecordings?: string[];
@@ -74,6 +80,8 @@ export const UpdateStoryInputCategory = {
   custom: "custom",
 } as const;
 
+export type UpdateStoryInputQuizQuestionsItem = { [key: string]: unknown };
+
 export interface UpdateStoryInput {
   title?: string;
   category?: UpdateStoryInputCategory;
@@ -83,6 +91,7 @@ export interface UpdateStoryInput {
   videoUrl?: string | null;
   videoFile?: string | null;
   quizEnabled?: boolean;
+  quizQuestions?: UpdateStoryInputQuizQuestionsItem[];
   audioFile?: string | null;
   images?: string[];
   voiceRecordings?: string[];

@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { StoryCategory } from "./storyCategory";
+import type { StoryQuizQuestionsItem } from "./storyQuizQuestionsItem";
 
 export interface Story {
   id: string;
@@ -17,6 +18,7 @@ export interface Story {
   videoUrl?: string | null;
   videoFile?: string | null;
   quizEnabled: boolean;
+  quizQuestions: StoryQuizQuestionsItem[];
   audioFile?: string | null;
   images: string[];
   voiceRecordings: string[];

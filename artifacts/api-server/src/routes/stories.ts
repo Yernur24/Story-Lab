@@ -107,6 +107,7 @@ function mapStory(row: typeof storiesTable.$inferSelect) {
     audioFile: row.audioFile ?? undefined,
     images: (row.images as string[]) ?? [],
     voiceRecordings: (row.voiceRecordings as string[]) ?? [],
+    quizQuestions: (row.quizQuestions as object[]) ?? [],
     isFavorite: row.isFavorite,
     readCount: row.readCount,
     rating: row.rating ?? 0,
@@ -191,7 +192,7 @@ router.put("/stories/:id", async (req, res) => {
     const rows = await db.select().from(storiesTable).where(eq(storiesTable.id, req.params.id));
     if (!rows[0]) return res.status(404).json({ error: "Ертегі табылмады" });
     const update: Partial<typeof storiesTable.$inferInsert> = {};
-    const fields = ["title","category","description","content","coverEmoji","videoUrl","videoFile","quizEnabled","audioFile","images","voiceRecordings","isFavorite","readCount"] as const;
+    const fields = ["title","category","description","content","coverEmoji","videoUrl","videoFile","quizEnabled","quizQuestions","audioFile","images","voiceRecordings","isFavorite","readCount"] as const;
     for (const field of fields) {
       if (req.body[field] !== undefined) {
         (update as Record<string, unknown>)[field] = req.body[field];

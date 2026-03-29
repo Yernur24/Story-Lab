@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { UpdateStoryInputCategory } from "./updateStoryInputCategory";
+import type { UpdateStoryInputQuizQuestionsItem } from "./updateStoryInputQuizQuestionsItem";
 
 export interface UpdateStoryInput {
   title?: string;
@@ -16,6 +17,7 @@ export interface UpdateStoryInput {
   videoUrl?: string | null;
   videoFile?: string | null;
   quizEnabled?: boolean;
+  quizQuestions?: UpdateStoryInputQuizQuestionsItem[];
   audioFile?: string | null;
   images?: string[];
   voiceRecordings?: string[];

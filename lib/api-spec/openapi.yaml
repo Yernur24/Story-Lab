@@ -385,6 +385,10 @@ components:
           nullable: true
         quizEnabled:
           type: boolean
+        quizQuestions:
+          type: array
+          items:
+            type: object
         audioFile:
           type: string
           nullable: true
@@ -415,6 +419,7 @@ components:
         - images
         - voiceRecordings
         - quizEnabled
+        - quizQuestions
 
     CreateStoryInput:
       type: object
@@ -438,6 +443,10 @@ components:
           nullable: true
         quizEnabled:
           type: boolean
+        quizQuestions:
+          type: array
+          items:
+            type: object
         audioFile:
           type: string
           nullable: true
@@ -478,6 +487,10 @@ components:
           nullable: true
         quizEnabled:
           type: boolean
+        quizQuestions:
+          type: array
+          items:
+            type: object
         audioFile:
           type: string
           nullable: true

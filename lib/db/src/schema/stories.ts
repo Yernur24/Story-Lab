@@ -12,6 +12,7 @@ export const storiesTable = pgTable("stories", {
   videoUrl: text("video_url"),
   videoFile: text("video_file"),
   quizEnabled: boolean("quiz_enabled").notNull().default(false),
+  quizQuestions: jsonb("quiz_questions").notNull().default([]).$type<object[]>(),
   audioFile: text("audio_file"),
   images: jsonb("images").notNull().default([]).$type<string[]>(),
   voiceRecordings: jsonb("voice_recordings").notNull().default([]).$type<string[]>(),
