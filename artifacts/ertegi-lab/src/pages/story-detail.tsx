@@ -166,7 +166,7 @@ export default function StoryDetail() {
   const [passwordInput, setPasswordInput] = useState('');
   const [passwordError, setPasswordError] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const QUIZ_PASSWORD = 'StroryLab2026';
+  const QUIZ_PASSWORD = 'StoryLab2026';
 
   useEffect(() => {
     if (id) {
