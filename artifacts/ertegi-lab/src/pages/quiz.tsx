@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useRoute, Link } from "wouter";
 import { useStory, useStories } from "@/hooks/use-stories";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Trophy, RotateCcw, ChevronRight, Lightbulb, CheckCircle2, XCircle, Pencil, Settings2 } from "lucide-react";
+import { ArrowLeft, Trophy, RotateCcw, ChevronRight, Lightbulb, CheckCircle2, XCircle, Pencil } from "lucide-react";
 import { getQuizForStory, generateAutoQuiz, generateImageMatchQuestions, QuizQuestion, QuizType } from "@/data/quizData";
 import { trackQuiz } from "@/lib/stats";
 import type { CustomQuestion } from "./quiz-editor";
@@ -280,12 +280,6 @@ export default function QuizPage() {
             })}
           </div>
 
-          <Link
-            href={`/quiz-editor/${id}`}
-            className="flex items-center justify-center gap-2 w-full py-3 bg-white border-2 border-dashed border-border text-muted-foreground font-bold rounded-2xl hover:border-primary hover:text-primary transition-all"
-          >
-            <Settings2 className="w-4 h-4" /> ✏️ Өз сұрақтарымды жасау
-          </Link>
         </div>
       </div>
     );
